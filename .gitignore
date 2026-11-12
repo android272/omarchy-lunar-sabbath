@@ -1,0 +1,4 @@
+*.qmlc
+.qmlls.ini
+.qt/
+*.log

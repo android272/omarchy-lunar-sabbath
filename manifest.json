@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "id": "lunar.sabbath",
+  "name": "Lunar Sabbath",
+  "version": "0.1.0",
+  "author": "Lunar Sabbath",
+  "license": "MIT",
+  "description": "Offline moon phase, calendar, cycle, and eclipse companion with configurable lunar Sabbath rules.",
+  "keywords": [
+    "moon",
+    "lunar",
+    "sabbath",
+    "calendar",
+    "eclipse",
+    "offline",
+    "bar-widget",
+    "quickshell"
+  ],
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Lunar Sabbath",
+    "description": "Drawn moon phase with a calendar, lunar cycle, eclipses, and selectable Sabbath rules.",
+    "category": "Info",
+    "aliases": [
+      "moon",
+      "lunar",
+      "sabbath",
+      "phase",
+      "calendar",
+      "eclipse"
+    ],
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "displayMode": "moon",
+      "sabbathRule": "days-8-15-22-29",
+      "newMoonBasis": "conjunction"
+    },
+    "schema": [
+      {
+        "key": "displayMode",
+        "type": "enum",
+        "label": "Bar display",
+        "options": [
+          "moon",
+          "illumination",
+          "letter",
+          "word"
+        ]
+      },
+      {
+        "key": "sabbathRule",
+        "type": "enum",
+        "label": "Sabbath rule",
+        "options": [
+          "days-8-15-22-29",
+          "days-7-14-21-28",
+          "week-saturday"
+        ]
+      },
+      {
+        "key": "newMoonBasis",
+        "type": "enum",
+        "label": "New moon basis",
+        "options": [
+          "conjunction",
+          "crescent-1",
+          "crescent-2"
+        ]
+      }
+    ]
+  }
+}
