@@ -152,7 +152,8 @@ Ui.Panel {
     anchorItem: root.anchorItem
     bar: root.bar
     owner: root.barIdentity
-    contentWidth: fittedContentWidth(Style.space(460), Style.space(520))
+    // 500 keeps the Cycle and Eclipses labels intact. At 460 those two tabs elide.
+    contentWidth: fittedContentWidth(Style.space(500), Style.space(560))
     // Day navigation is pinned to the card floor, outside the scrolling
     // column, so every tab keeps it in view. Count that row in the fitted
     // height or a short tab clips the buttons.
