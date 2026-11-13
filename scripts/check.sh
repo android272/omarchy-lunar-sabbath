@@ -7,6 +7,8 @@ cd "$root_dir"
 
 echo "node: lunar.test.js"
 node tests/lunar.test.js
+echo "node: coordfield.test.js"
+node tests/coordfield.test.js
 
 echo "validate: manifest"
 omarchy plugin validate "$root_dir"
@@ -35,6 +37,7 @@ qml_files=(
   EclipsesView.qml
   HotkeysView.qml
   SettingsView.qml
+  CoordField.qml
   LunarModel.qml
   Panel.qml
   BarWidget.qml
@@ -123,6 +126,7 @@ run_scene tests/qml/ZoneSmoke.qml "ZoneSmoke: Jerusalem offset OK"
 run_scene tests/qml/RenderSmoke.qml "RenderSmoke: quarter disk lit on the right OK"
 run_scene tests/qml/RenderSmoke.qml "RenderSmoke: quarter disk lit on the right OK" 2
 run_scene tests/qml/PartsSmoke.qml "PartsSmoke: views loaded OK"
+run_scene tests/qml/CoordSmoke.qml "CoordSmoke: affixes locked OK"
 run_scene tests/qml/StateSmoke.qml "StateSmoke: settings persisted OK"
 
 python3 - "$stage_dir/state/lunar-sabbath/settings.json" <<'PY'

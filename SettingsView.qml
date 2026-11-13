@@ -26,10 +26,10 @@ Column {
   function syncFields(force) {
     if (!root.model || (root.typing && !force)) return
     labelField.text = root.locationConfigured ? root.locationLabel : ""
-    latField.text = root.model.latitude === null || root.model.latitude === undefined || !root.locationConfigured
-      ? "" : String(root.model.latitude)
-    lonField.text = root.model.longitude === null || root.model.longitude === undefined || !root.locationConfigured
-      ? "" : String(root.model.longitude)
+    latField.setValue(root.model.latitude === null || root.model.latitude === undefined || !root.locationConfigured
+      ? "" : root.model.latitude)
+    lonField.setValue(root.model.longitude === null || root.model.longitude === undefined || !root.locationConfigured
+      ? "" : root.model.longitude)
     zoneField.text = root.locationConfigured ? root.model.timeZone : ""
     cityField.text = ""
   }
@@ -167,17 +167,17 @@ Column {
   Row {
     width: parent.width
     spacing: Style.spacing.sm
-    Ui.TextField {
+    CoordField {
       id: latField
       width: (parent.width - parent.spacing) / 2
-      placeholderText: "Latitude"
+      adornPrefix: "lat: "
       foreground: Color.popups.text
       placeholderTextColor: Util.alpha(Color.popups.text, 0.45)
     }
-    Ui.TextField {
+    CoordField {
       id: lonField
       width: (parent.width - parent.spacing) / 2
-      placeholderText: "Longitude"
+      adornPrefix: "long: "
       foreground: Color.popups.text
       placeholderTextColor: Util.alpha(Color.popups.text, 0.45)
     }
@@ -196,7 +196,7 @@ Column {
     spacing: Style.spacing.sm
     TextButton {
       label: "Save location"
-      onClicked: root.locationSubmitted(labelField.text, latField.text, lonField.text, zoneField.text)
+      onClicked: root.locationSubmitted(labelField.text, latField.body, lonField.body, zoneField.text)
     }
     TextButton {
       label: "Clear active"
