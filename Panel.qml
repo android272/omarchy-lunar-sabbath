@@ -153,7 +153,12 @@ Ui.Panel {
     bar: root.bar
     owner: root.barIdentity
     contentWidth: fittedContentWidth(Style.space(460), Style.space(520))
-    contentHeight: fittedContentHeight(page.implicitHeight, Style.space(700))
+    // Day navigation is pinned to the card floor, outside the scrolling
+    // column, so every tab keeps it in view. Count that row in the fitted
+    // height or a short tab clips the buttons.
+    contentHeight: fittedContentHeight(
+      page.implicitHeight + (dayNav.visible ? dayNav.implicitHeight + Style.spacing.md : 0),
+      Style.space(700))
     focusTarget: keyCatcher
 
     onOpenChanged: mainFlick.contentY = 0
@@ -236,6 +241,7 @@ Ui.Panel {
           anchors.left: parent.left
           anchors.top: parent.top
           anchors.bottom: parent.bottom
+          anchors.bottomMargin: dayNav.visible ? dayNav.implicitHeight + Style.spacing.md : 0
           width: parent.width - scrollHost.gutter
           clip: true
           contentWidth: width
@@ -299,23 +305,6 @@ Ui.Panel {
               elide: Text.ElideRight
               font.family: Style.font.family
               font.pixelSize: Style.font.body
-            }
-
-            Row {
-              width: parent.width
-              visible: !root.showingOverlay
-              spacing: Style.spacing.sm
-              TextButton {
-                label: "<"
-                accessibleName: "Previous day"
-                onClicked: if (root.model) root.model.stepDate(-1)
-              }
-              TextButton {
-                label: ">"
-                accessibleName: "Next day"
-                onClicked: if (root.model) root.model.stepDate(1)
-              }
-              TextButton { label: "Today"; onClicked: if (root.model) root.model.jumpToday() }
             }
 
             Row {
@@ -447,6 +436,26 @@ Ui.Panel {
           policy: scrollHost.gutter > 0
             ? Controls.ScrollBar.AlwaysOn : Controls.ScrollBar.AlwaysOff
           onImplicitWidthChanged: scrollHost.syncGutter()
+        }
+
+        Row {
+          id: dayNav
+          visible: !root.showingOverlay
+          anchors.left: mainFlick.left
+          anchors.right: mainFlick.right
+          anchors.bottom: parent.bottom
+          spacing: Style.spacing.sm
+          TextButton {
+            label: "<"
+            accessibleName: "Previous day"
+            onClicked: if (root.model) root.model.stepDate(-1)
+          }
+          TextButton { label: "Today"; onClicked: if (root.model) root.model.jumpToday() }
+          TextButton {
+            label: ">"
+            accessibleName: "Next day"
+            onClicked: if (root.model) root.model.stepDate(1)
+          }
         }
 
         Component.onCompleted: Qt.callLater(scrollHost.syncGutter)
