@@ -1,10 +1,84 @@
 import QtQuick
 import qs.Commons
+import qs.Ui as Ui
 
 Column {
   id: root
 
   signal invoked(string id)
+
+  // The panel flickable. Keyboard movement scrolls this so the cursor row stays visible.
+  property Flickable viewport: null
+  property int selectedIndex: 0
+  readonly property int rowHeight: Math.max(Style.space(50), Style.font.body + Style.spacing.rowPaddingX * 2)
+  readonly property int rowPeek: Math.round(rowHeight * 0.55)
+
+  function disarmPointer() {
+    pointerGate.reset()
+  }
+
+  function resetCursor() {
+    root.selectedIndex = 0
+    root.disarmPointer()
+    root.revealCursor()
+  }
+
+  function moveCursor(delta) {
+    var count = root.entries.length
+    if (count < 1) return
+    root.disarmPointer()
+    root.selectedIndex = (root.selectedIndex + delta + count) % count
+    root.revealCursor()
+  }
+
+  function activate() {
+    if (root.selectedIndex < 0 || root.selectedIndex >= root.entries.length) return
+    root.invoked(root.entries[root.selectedIndex].id)
+  }
+
+  function selectFromPointer(index, item, mouse) {
+    if (!pointerGate.moved(item, mouse)) return
+    if (index < 0 || index >= root.entries.length) return
+    root.selectedIndex = index
+  }
+
+  // Keep the cursor row on screen. The ends jump to the top or bottom of the
+  // scroll, matching a wrap. Middle rows also leave a peek of the neighbor.
+  function revealCursor() {
+    var flick = root.viewport
+    if (!flick || flick.height < 1) return
+    var count = root.entries.length
+    var index = root.selectedIndex
+    if (count < 1 || index < 0 || index >= count) return
+    var maxY = Math.max(0, flick.contentHeight - flick.height)
+    if (index === 0) {
+      flick.contentY = 0
+      return
+    }
+    if (index === count - 1) {
+      flick.contentY = maxY
+      return
+    }
+    var row = keyRepeater.itemAt(index)
+    if (!row) return
+    var pos = row.mapToItem(flick.contentItem, 0, 0)
+    var top = pos.y
+    var bottom = top + row.height
+    var y = flick.contentY
+    if (top < y) y = top
+    if (bottom > y + flick.height) y = bottom - flick.height
+    flick.contentY = Math.max(0, Math.min(y, maxY))
+
+    var peek = root.rowPeek + Style.spacing.xs
+    var overhang = bottom + peek - (flick.contentY + flick.height)
+    if (overhang > 0) flick.contentY = Math.min(flick.contentY + overhang, maxY)
+    var underhang = flick.contentY - (top - peek)
+    if (underhang > 0) flick.contentY = Math.max(flick.contentY - underhang, 0)
+  }
+
+  Ui.PointerMoveGate {
+    id: pointerGate
+  }
 
   // Same order the panel handles. Labels match the Omarchy keybindings
   // menu: uppercase key, arrow, short action.
@@ -77,16 +151,18 @@ Column {
     spacing: Style.spacing.xs
 
     Repeater {
+      id: keyRepeater
       model: root.entries
       delegate: Rectangle {
         id: row
+        required property int index
         required property var modelData
-        readonly property bool highlighted: mouse.containsMouse
+        readonly property bool highlighted: root.selectedIndex === index
         readonly property color lineColor: highlighted ? Color.menu.selectedText : Color.menu.text
 
         width: root.width
         // Omarchy menu base row: at least 50px, heading type, menu font.
-        height: Math.max(Style.space(50), Style.font.body + Style.spacing.rowPaddingX * 2)
+        height: root.rowHeight
         radius: Style.cornerRadius
         color: highlighted ? Color.menu.selectedBackground : "transparent"
 
@@ -135,7 +211,12 @@ Column {
           anchors.fill: parent
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
-          onClicked: root.invoked(row.modelData.id)
+          onEntered: root.selectFromPointer(row.index, row, { x: mouse.mouseX, y: mouse.mouseY })
+          onPositionChanged: function (mousePos) { root.selectFromPointer(row.index, row, mousePos) }
+          onClicked: {
+            root.selectedIndex = row.index
+            root.invoked(row.modelData.id)
+          }
         }
 
         Accessible.role: Accessible.Button

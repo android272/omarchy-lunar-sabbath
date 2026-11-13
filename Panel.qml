@@ -86,6 +86,7 @@ Ui.Panel {
     root.showingSettings = false
     root.showingHotkeys = true
     mainFlick.contentY = 0
+    hotkeysView.resetCursor()
     if (root.opened) keyCatcher.forceActiveFocus()
   }
 
@@ -164,9 +165,17 @@ Ui.Panel {
       }
 
       onMoveRequested: function (dx, dy) {
+        if (root.showingHotkeys) {
+          if (dy !== 0) hotkeysView.moveCursor(dy)
+          return
+        }
         if (root.showingOverlay || !root.model) return
         if (dx !== 0) root.model.stepDate(dx)
         if (dy !== 0) root.model.stepDate(dy * 7)
+      }
+
+      onActivateRequested: {
+        if (root.showingHotkeys) hotkeysView.activate()
       }
 
       onTabRequested: function (direction) {
@@ -381,7 +390,9 @@ Ui.Panel {
             }
 
             HotkeysView {
+              id: hotkeysView
               visible: root.showingHotkeys
+              viewport: mainFlick
               onInvoked: function (id) { root.runHotkey(id) }
             }
 
