@@ -8,7 +8,6 @@ Column {
   property var phases: []
   property bool viewingToday: true
   property string basisLabel: ""
-  signal jumpPhase(int angle)
 
   spacing: Style.spacing.md
   width: parent ? parent.width : implicitWidth
@@ -194,19 +193,6 @@ Column {
           font.pixelSize: Style.font.caption
         }
       }
-    }
-  }
-
-  Row {
-    width: parent.width
-    spacing: Style.spacing.sm
-    TextButton {
-      label: "Next new"
-      onClicked: root.jumpPhase(0)
-    }
-    TextButton {
-      label: "Next full"
-      onClicked: root.jumpPhase(180)
     }
   }
 

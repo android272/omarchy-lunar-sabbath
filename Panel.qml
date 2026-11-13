@@ -338,7 +338,6 @@ Ui.Panel {
               phases: root.model && root.model.view ? root.model.view.phases : []
               viewingToday: root.model && root.model.view ? root.model.view.isToday : true
               basisLabel: root.model && root.model.view && root.model.view.basis ? root.model.view.basis.label : ""
-              onJumpPhase: function (angle) { if (root.model) root.model.jumpToPhase(angle) }
             }
 
             CalendarView {
@@ -451,7 +450,17 @@ Ui.Panel {
             gold: true
             onClicked: if (root.model) root.model.jumpToPreviousSabbath()
           }
+          TextButton {
+            label: "< Phase"
+            accessibleName: "Previous moon phase"
+            onClicked: if (root.model) root.model.jumpPhaseBy(-1)
+          }
           TextButton { label: "Today"; onClicked: if (root.model) root.model.jumpToday() }
+          TextButton {
+            label: "Phase >"
+            accessibleName: "Next moon phase"
+            onClicked: if (root.model) root.model.jumpPhaseBy(1)
+          }
           TextButton {
             label: "Sabbath >"
             accessibleName: "Next Sabbath"

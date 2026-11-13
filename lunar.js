@@ -251,6 +251,47 @@ function nextPhaseJd(jd, targetDeg) {
   return refineCrossing(phaseResidual(targetDeg), jd + ahead / 360 * SYNODIC_DAYS, 2.5)
 }
 
+function previousPhaseJd(jd, targetDeg) {
+  var elong = unsignedElongation(jd)
+  var behind = wrap360(elong - targetDeg)
+  if (behind < 0.2) behind += 360
+  return refineCrossing(phaseResidual(targetDeg), jd - behind / 360 * SYNODIC_DAYS, 2.5)
+}
+
+// New, first quarter, full, and last quarter. The buttons step between these
+// instants. Crescent and gibbous are ranges, not a date to land on.
+var PRINCIPAL_PHASES = [0, 90, 180, 270]
+
+function neighboringPhase(iso, timeZone, direction) {
+  var parts = parseIso(iso)
+  if (!parts || (direction !== 1 && direction !== -1)) return { iso: "", angle: -1, utcMs: 0 }
+  var start = utcMsFromLocal(parts.year, parts.month, parts.day, 0, 0, timeZone)
+  var jd = jdFromUnixMs(start)
+  var best = null
+  var i
+  for (i = 0; i < PRINCIPAL_PHASES.length; i++) {
+    var when = direction < 0 ? previousPhaseJd(jd, PRINCIPAL_PHASES[i]) : nextPhaseJd(jd, PRINCIPAL_PHASES[i])
+    var guard = 0
+    var event = null
+    // Midnight on a phase's own civil date still finds that phase. Step a
+    // cycle so the button always leaves the day being viewed.
+    while (guard < 3) {
+      var ms = unixMsFromJd(when)
+      var eventIso = localIso(ms, timeZone)
+      var onOtherDay = direction < 0 ? eventIso < iso : eventIso > iso
+      if (onOtherDay) {
+        event = { iso: eventIso, angle: PRINCIPAL_PHASES[i], utcMs: ms }
+        break
+      }
+      when = direction < 0 ? previousPhaseJd(when - 0.75, PRINCIPAL_PHASES[i]) : nextPhaseJd(when + 0.75, PRINCIPAL_PHASES[i])
+      guard += 1
+    }
+    if (!event) continue
+    if (!best || (direction < 0 ? event.utcMs > best.utcMs : event.utcMs < best.utcMs)) best = event
+  }
+  return best || { iso: "", angle: -1, utcMs: 0 }
+}
+
 function illuminationOf(jd) {
   var b = bodies(jd)
   var psi = eclipticSeparation(b.sunLon, b.sunLat, b.moonLon, b.moonLat)

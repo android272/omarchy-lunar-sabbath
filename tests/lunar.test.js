@@ -248,6 +248,71 @@ const chicagoNoonTable = (() => {
 })()
 check("zoneinfo roundtrip matches Intl", Math.abs(chicagoNoonTable - chicagoNoon) < 1000, String(chicagoNoonTable - chicagoNoon))
 
+function phaseNameOn(iso, zone) {
+  return context.daySnapshot(iso, zone, "days-8-15-22-29", "conjunction", null, null, []).phaseName
+}
+
+const quarterNames = ["New Moon", "First Quarter", "Full Moon", "Last Quarter"]
+function checkPhaseWalk(zone, startIso) {
+  let cursor = startIso
+  const seen = [cursor]
+  for (let step = 0; step < 8; step++) {
+    const event = context.neighboringPhase(cursor, zone, 1)
+    const gap = context.daysBetween(cursor, event.iso)
+    check(
+      zone + " next phase leaves " + cursor,
+      event.iso > cursor && gap >= 5 && gap <= 10 && quarterNames.indexOf(phaseNameOn(event.iso, zone)) >= 0,
+      event.iso + " gap " + gap + " " + phaseNameOn(event.iso, zone)
+    )
+    const back = context.neighboringPhase(event.iso, zone, -1)
+    check(zone + " previous phase undoes " + event.iso, back.iso === cursor, back.iso + " vs " + cursor)
+    cursor = event.iso
+    seen.push(cursor)
+  }
+  const names = seen.map((iso) => phaseNameOn(iso, zone))
+  let ordered = true
+  for (let i = 1; i < names.length; i++) {
+    const prev = quarterNames.indexOf(names[i - 1])
+    const next = quarterNames.indexOf(names[i])
+    if (next !== (prev + 1) % 4) ordered = false
+  }
+  check(zone + " phases cycle new, quarter, full, quarter", ordered, names.join(" → "))
+}
+
+if (solarAug) {
+  const solarMs = context.unixMsFromJd(solarAug.jd)
+  const solarUtc = context.localIso(solarMs, "UTC")
+  const solarAuck = context.localIso(solarMs, "Pacific/Auckland")
+  check("utc new moon day is the eclipse date", solarUtc === "2026-08-12", solarUtc)
+  check(
+    "utc next phase leaves the new moon",
+    context.neighboringPhase(solarUtc, "UTC", 1).iso > solarUtc
+  )
+  check(
+    "utc previous phase of the next day is the new moon",
+    context.neighboringPhase(context.addDays(solarUtc, 1), "UTC", -1).iso === solarUtc
+  )
+  check(
+    "Auckland previous phase of the next day is the new moon",
+    context.neighboringPhase(context.addDays(solarAuck, 1), "Pacific/Auckland", -1).iso === solarAuck,
+    solarAuck
+  )
+  checkPhaseWalk("UTC", solarUtc)
+  checkPhaseWalk("Pacific/Auckland", solarAuck)
+  checkPhaseWalk("Asia/Jerusalem", context.localIso(solarMs, "Asia/Jerusalem"))
+}
+if (lunarMar) {
+  const fullIso = context.localIso(context.unixMsFromJd(lunarMar.jd), "UTC")
+  check("utc full moon day is the eclipse date", fullIso === "2026-03-03", fullIso)
+  check(
+    "standing on the full moon, next is later and previous is earlier",
+    context.neighboringPhase(fullIso, "UTC", 1).iso > fullIso
+      && context.neighboringPhase(fullIso, "UTC", -1).iso < fullIso
+  )
+}
+check("bad phase step is empty", context.neighboringPhase("nope", "UTC", 1).iso === "")
+check("zero phase direction is empty", context.neighboringPhase("2026-08-12", "UTC", 0).iso === "")
+
 console.log("phase " + view.now.phaseName + " " + view.now.illuminationPercent + "% day " + view.now.lunarDay
   + " status " + view.now.status.title)
 console.log("eclipses " + view.eclipses.map((e) => e.type + " " + e.whenLabel + " " + e.countdown).join(" || "))

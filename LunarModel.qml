@@ -322,6 +322,12 @@ Item {
     root.refresh()
   }
 
+  function jumpPhaseBy(direction) {
+    var event = Lunar.neighboringPhase(root.resolvedIso(), root.activeZone(), direction)
+    if (event && event.iso) root.selectedIso = event.iso
+    root.refresh()
+  }
+
   function jumpToPreviousSabbath() {
     var iso = Lunar.previousSabbathIso(root.resolvedIso(), root.activeZone(), root.ruleId, root.basisId)
     if (iso) root.selectedIso = iso
