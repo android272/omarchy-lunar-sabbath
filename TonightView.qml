@@ -75,44 +75,6 @@ Column {
   }
 
   Rectangle {
-    width: parent.width
-    implicitHeight: statusText.implicitHeight + Style.space(16)
-    radius: Style.space(6)
-    color: root.day && root.day.isSabbath
-      ? Util.alpha("#e0b44c", 0.18)
-      : Util.alpha(Color.popups.text, 0.05)
-    border.width: 1
-    border.color: root.day && root.day.isSabbath ? "#e0b44c" : Util.alpha(Color.popups.text, 0.16)
-
-    Column {
-      id: statusText
-      width: parent.width - Style.space(20)
-      anchors.centerIn: parent
-      spacing: Style.space(2)
-
-      Text {
-        width: parent.width
-        text: root.day && root.day.status ? root.day.status.title : ""
-        color: root.day && root.day.isSabbath ? "#e0b44c" : Color.popups.text
-        font.family: Style.font.family
-        font.pixelSize: Style.font.body
-        font.bold: true
-        horizontalAlignment: Text.AlignHCenter
-      }
-      Text {
-        width: parent.width
-        text: root.day && root.day.status ? root.day.status.detail : ""
-        color: Color.popups.text
-        opacity: 0.8
-        wrapMode: Text.WordWrap
-        horizontalAlignment: Text.AlignHCenter
-        font.family: Style.font.family
-        font.pixelSize: Style.font.caption
-      }
-    }
-  }
-
-  Rectangle {
     id: skyBox
     width: parent.width
     implicitHeight: Style.space(88)
