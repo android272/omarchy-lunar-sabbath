@@ -333,7 +333,6 @@ Ui.Panel {
                 settingsView.syncFields(true)
                 root.commitShared()
               }
-              onCloseRequested: root.showingSettings = false
             }
 
             Text {

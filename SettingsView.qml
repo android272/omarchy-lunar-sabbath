@@ -22,7 +22,6 @@ Column {
   signal locationSubmitted(string label, string latitude, string longitude, string zone)
   signal savedActivated(var place)
   signal locationCleared()
-  signal closeRequested()
 
   function syncFields(force) {
     if (!root.model || (root.typing && !force)) return
@@ -37,11 +36,6 @@ Column {
 
   spacing: Style.spacing.md
   width: parent ? parent.width : implicitWidth
-
-  Row {
-    width: parent.width
-    TextButton { label: "Back"; onClicked: root.closeRequested() }
-  }
 
   Text {
     width: parent.width
