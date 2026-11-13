@@ -989,6 +989,7 @@ function daySnapshot(iso, timeZone, ruleId, basisId, latitude, longitude, cache)
   return {
     iso: iso,
     dateLabel: formatIso(iso, timeZone),
+    headingDate: WEEKDAYS[weekday] + ", " + MONTHS_SHORT[parts.month - 1] + " " + parts.day,
     weekdayName: WEEKDAYS[weekday],
     weekdayIndex: weekday,
     phaseName: phaseName(angle),

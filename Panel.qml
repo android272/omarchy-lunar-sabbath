@@ -138,6 +138,14 @@ Ui.Panel {
     else if (root.model) root.model.pullSession()
   }
 
+  function viewingLabel() {
+    var view = root.model && root.model.view ? root.model.view : null
+    var selected = view && view.selected ? view.selected : null
+    if (!selected || !selected.headingDate) return ""
+    if (view.isToday) return "Tonight - " + selected.headingDate
+    return selected.headingDate
+  }
+
   Ui.KeyboardPanel {
     id: popup
     open: root.opened
@@ -286,13 +294,11 @@ Ui.Panel {
             Text {
               width: parent.width
               visible: !root.showingOverlay
-              text: (root.model && root.model.view && root.model.view.rule ? root.model.view.rule.short : "Rule")
-                + (root.model && root.model.view && root.model.view.basis ? "  ·  " + root.model.view.basis.label : "")
+              text: root.viewingLabel()
               color: Color.popups.text
-              opacity: 0.8
-              wrapMode: Text.WordWrap
+              elide: Text.ElideRight
               font.family: Style.font.family
-              font.pixelSize: Style.font.bodySmall
+              font.pixelSize: Style.font.body
             }
 
             Row {
@@ -303,17 +309,6 @@ Ui.Panel {
                 label: "<"
                 accessibleName: "Previous day"
                 onClicked: if (root.model) root.model.stepDate(-1)
-              }
-              Text {
-                width: parent.width - Style.space(150)
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.model && root.model.view && root.model.view.selected
-                  ? root.model.view.selected.dateLabel : ""
-                color: Color.popups.text
-                horizontalAlignment: Text.AlignHCenter
-                font.family: Style.font.family
-                font.pixelSize: Style.font.body
-                elide: Text.ElideRight
               }
               TextButton {
                 label: ">"

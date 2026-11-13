@@ -127,6 +127,7 @@ const view = context.buildView({
   weekStart: 0
 })
 check("view has phase", !!view.now.phaseName, JSON.stringify(view.now))
+check("today heading", view.isToday && view.now.headingDate === "Thursday, Nov 5", view.now.headingDate)
 check("calendar has 42 days", view.calendar.cells.length === 42)
 check("sabbath list", view.sabbaths.length === 8, String(view.sabbaths.length))
 check("eclipse cards", view.eclipses.length === 2, view.eclipses.map((e) => e.type).join(", "))
