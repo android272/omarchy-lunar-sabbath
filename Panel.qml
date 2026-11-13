@@ -328,17 +328,20 @@ Ui.Panel {
               visible: !root.showingOverlay
               spacing: Style.space(4)
               Repeater {
+                // Nerd-font glyphs sit left of the label: full moon, calendar,
+                // waxing crescent + full moon + waning crescent, fire, solar eclipse.
                 model: [
-                  { id: "tonight", label: "Tonight", key: "1" },
-                  { id: "calendar", label: "Calendar", key: "2" },
-                  { id: "cycle", label: "Cycle", key: "3" },
-                  { id: "sabbaths", label: "Sabbaths", key: "4" },
-                  { id: "eclipses", label: "Eclipses", key: "5" }
+                  { id: "tonight", label: "Tonight", icon: String.fromCodePoint(0xF0F62) },
+                  { id: "calendar", label: "Calendar", icon: String.fromCodePoint(0xF00ED) },
+                  { id: "cycle", label: "Cycle", icon: String.fromCodePoint(0xF0F67, 0xF0F62, 0xF0F65) },
+                  { id: "sabbaths", label: "Sabbaths", icon: String.fromCodePoint(0xF0238) },
+                  { id: "eclipses", label: "Eclipses", icon: String.fromCodePoint(0xE368) }
                 ]
                 delegate: TextButton {
                   required property var modelData
                   width: (parent.width - Style.space(4) * 4) / 5
                   label: modelData.label
+                  icon: modelData.icon
                   selected: root.activeView === modelData.id
                   onClicked: root.showView(modelData.id)
                 }
