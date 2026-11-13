@@ -32,6 +32,7 @@ qml_files=(
   CycleView.qml
   SabbathsView.qml
   EclipsesView.qml
+  HotkeysView.qml
   SettingsView.qml
   LunarModel.qml
   Panel.qml

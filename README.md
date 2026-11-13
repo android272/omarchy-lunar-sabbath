@@ -19,23 +19,23 @@ Extra labels are hidden when the bar is vertical. The mode still cycles, and the
 
 ## Panel
 
-Tonight, Calendar, Cycle, Sabbaths, and Eclipses share one selected date. Settings open from the cog-style Settings button.
+Tonight, Calendar, Cycle, Sabbaths, and Eclipses share one selected date. The keyboard button to the left of Settings opens the hotkey list. Settings open from the cog button. Either menu closes from its X button.
 
 Keyboard, when the panel is open and a text field is not focused:
 
 | Key | Action |
 | --- | --- |
 | 1–5 | Tonight, Calendar, Cycle, Sabbaths, Eclipses |
-| Left / Right | Previous or next day |
-| Up / Down | Previous or next week |
+| Left / H, Right / L | Previous or next day |
+| Up / K, Down / J | Previous or next week |
 | T | Today |
 | N | Next new moon |
 | F | Next full moon |
 | B | Next Sabbath |
 | G | Settings |
-| Esc | Close settings, then the panel |
-
-Tab still moves between shell panels.
+| ? | Hotkeys |
+| Esc | Close hotkeys or settings, then the panel |
+| Tab / Shift+Tab | Next or previous shell panel |
 
 ## Sabbath rules
 

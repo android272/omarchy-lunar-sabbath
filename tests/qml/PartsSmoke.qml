@@ -6,6 +6,7 @@ import "../../CycleView.qml"
 import "../../SabbathsView.qml"
 import "../../EclipsesView.qml"
 import "../../SettingsView.qml"
+import "../../HotkeysView.qml"
 
 Item {
   id: root
@@ -43,6 +44,10 @@ Item {
   EclipsesView {
     width: 460
     eclipses: model.view ? model.view.eclipses : []
+  }
+
+  HotkeysView {
+    width: 460
   }
 
   SettingsView {

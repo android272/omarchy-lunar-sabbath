@@ -15,10 +15,13 @@ Ui.Panel {
   property var model: null
   property string activeView: "tonight"
   property bool showingSettings: false
+  property bool showingHotkeys: false
+  readonly property bool showingOverlay: showingSettings || showingHotkeys
   readonly property var barIdentity: hostWidget || root
 
   function open() {
     root.showingSettings = false
+    root.showingHotkeys = false
     if (root.model && root.model.pendingView) {
       root.activeView = root.model.pendingView
       root.model.pendingView = ""
@@ -32,6 +35,7 @@ Ui.Panel {
 
   function close() {
     root.showingSettings = false
+    root.showingHotkeys = false
     root.controller.hide()
   }
 
@@ -52,7 +56,78 @@ Ui.Panel {
 
   function showView(name) {
     root.showingSettings = false
+    root.showingHotkeys = false
     root.activeView = name
+    mainFlick.contentY = 0
+    if (root.opened) keyCatcher.forceActiveFocus()
+  }
+
+  function openSettings() {
+    if (root.showingSettings) {
+      root.showingSettings = false
+      mainFlick.contentY = 0
+      if (root.opened) keyCatcher.forceActiveFocus()
+      return
+    }
+    root.showingHotkeys = false
+    root.showingSettings = true
+    settingsView.syncFields(true)
+    mainFlick.contentY = 0
+    if (root.opened) keyCatcher.forceActiveFocus()
+  }
+
+  function openHotkeys() {
+    if (root.showingHotkeys) {
+      root.showingHotkeys = false
+      mainFlick.contentY = 0
+      if (root.opened) keyCatcher.forceActiveFocus()
+      return
+    }
+    root.showingSettings = false
+    root.showingHotkeys = true
+    mainFlick.contentY = 0
+    if (root.opened) keyCatcher.forceActiveFocus()
+  }
+
+  function runHotkey(id) {
+    if (id === "hotkeys") {
+      root.openHotkeys()
+      return
+    }
+    if (id === "settings") {
+      root.openSettings()
+      return
+    }
+    if (id === "close") {
+      if (root.showingOverlay) {
+        root.showingHotkeys = false
+        root.showingSettings = false
+        mainFlick.contentY = 0
+        if (root.opened) keyCatcher.forceActiveFocus()
+      } else {
+        root.close()
+      }
+      return
+    }
+    if (id === "panel-next" || id === "panel-prev") {
+      root.switchPanel(id === "panel-next" ? 1 : -1)
+      return
+    }
+    root.showingHotkeys = false
+    root.showingSettings = false
+    if (id === "tonight" || id === "calendar" || id === "cycle" || id === "sabbaths" || id === "eclipses") {
+      root.showView(id)
+      return
+    }
+    if (!root.model) return
+    if (id === "prev-day") root.model.stepDate(-1)
+    else if (id === "next-day") root.model.stepDate(1)
+    else if (id === "prev-week") root.model.stepDate(-7)
+    else if (id === "next-week") root.model.stepDate(7)
+    else if (id === "today") root.model.jumpToday()
+    else if (id === "new-moon") root.model.jumpToPhase(0)
+    else if (id === "full-moon") root.model.jumpToPhase(180)
+    else if (id === "next-sabbath") root.model.jumpToNextSabbath()
     mainFlick.contentY = 0
     if (root.opened) keyCatcher.forceActiveFocus()
   }
@@ -80,12 +155,16 @@ Ui.Panel {
       blocked: root.showingSettings && settingsView.typing
 
       onCloseRequested: {
-        if (root.showingSettings) root.showingSettings = false
-        else root.close()
+        if (root.showingOverlay) {
+          root.showingSettings = false
+          root.showingHotkeys = false
+          mainFlick.contentY = 0
+          if (root.opened) keyCatcher.forceActiveFocus()
+        } else root.close()
       }
 
       onMoveRequested: function (dx, dy) {
-        if (root.showingSettings || !root.model) return
+        if (root.showingOverlay || !root.model) return
         if (dx !== 0) root.model.stepDate(dx)
         if (dy !== 0) root.model.stepDate(dy * 7)
       }
@@ -95,8 +174,9 @@ Ui.Panel {
       }
 
       onTextKey: function (text) {
-        if (root.showingSettings) {
-          if (text === "g" || text === "G") root.showingSettings = false
+        if (root.showingSettings || root.showingHotkeys) {
+          if (text === "g" || text === "G") root.openSettings()
+          else if (text === "?") root.openHotkeys()
           return
         }
         var key = text.toLowerCase()
@@ -109,11 +189,8 @@ Ui.Panel {
         else if (key === "n") root.model.jumpToPhase(0)
         else if (key === "f") root.model.jumpToPhase(180)
         else if (key === "b") root.model.jumpToNextSabbath()
-        else if (key === "g") {
-          root.showingSettings = true
-          settingsView.syncFields(true)
-          mainFlick.contentY = 0
-        }
+        else if (key === "g") root.openSettings()
+        else if (text === "?") root.openHotkeys()
       }
 
       Item {
@@ -163,10 +240,15 @@ Ui.Panel {
             spacing: Style.spacing.md
 
             Row {
+              id: titleRow
               width: parent.width
               spacing: Style.spacing.sm
+              readonly property real hotkeysSlot: hotkeysButton.visible ? hotkeysButton.width : 0
+              readonly property real settingsSlot: settingsButton.width
+              readonly property int headerGaps: (hotkeysButton.visible ? 1 : 0) + 1
+
               Text {
-                width: parent.width - settingsButton.width - parent.spacing
+                width: Math.max(0, titleRow.width - titleRow.hotkeysSlot - titleRow.settingsSlot - titleRow.spacing * titleRow.headerGaps)
                 text: "Lunar Sabbath"
                 color: Color.popups.text
                 font.family: Style.font.family
@@ -175,20 +257,26 @@ Ui.Panel {
                 elide: Text.ElideRight
               }
               TextButton {
+                id: hotkeysButton
+                visible: !root.showingOverlay
+                icon: "󰌌"
+                accessibleName: "Hotkeys"
+                onClicked: root.openHotkeys()
+              }
+              TextButton {
                 id: settingsButton
-                icon: root.showingSettings ? "󰅖" : "󰒓"
-                accessibleName: root.showingSettings ? "Close settings" : "Settings"
+                icon: root.showingOverlay ? "󰅖" : "󰒓"
+                accessibleName: root.showingHotkeys ? "Close hotkeys" : (root.showingSettings ? "Close settings" : "Settings")
                 onClicked: {
-                  root.showingSettings = !root.showingSettings
-                  if (root.showingSettings) settingsView.syncFields(true)
-                  mainFlick.contentY = 0
+                  if (root.showingHotkeys) root.openHotkeys()
+                  else root.openSettings()
                 }
               }
             }
 
             Text {
               width: parent.width
-              visible: !root.showingSettings
+              visible: !root.showingOverlay
               text: (root.model && root.model.view && root.model.view.rule ? root.model.view.rule.short : "Rule")
                 + (root.model && root.model.view && root.model.view.basis ? "  ·  " + root.model.view.basis.label : "")
               color: Color.popups.text
@@ -200,7 +288,7 @@ Ui.Panel {
 
             Row {
               width: parent.width
-              visible: !root.showingSettings
+              visible: !root.showingOverlay
               spacing: Style.spacing.sm
               TextButton {
                 label: "<"
@@ -228,7 +316,7 @@ Ui.Panel {
 
             Row {
               width: parent.width
-              visible: !root.showingSettings
+              visible: !root.showingOverlay
               spacing: Style.space(4)
               Repeater {
                 model: [
@@ -249,7 +337,7 @@ Ui.Panel {
             }
 
             TonightView {
-              visible: !root.showingSettings && root.activeView === "tonight"
+              visible: !root.showingOverlay && root.activeView === "tonight"
               day: root.model && root.model.view ? root.model.view.selected : null
               phases: root.model && root.model.view ? root.model.view.phases : []
               viewingToday: root.model && root.model.view ? root.model.view.isToday : true
@@ -263,7 +351,7 @@ Ui.Panel {
             }
 
             CalendarView {
-              visible: !root.showingSettings && root.activeView === "calendar"
+              visible: !root.showingOverlay && root.activeView === "calendar"
               calendar: root.model && root.model.view ? root.model.view.calendar : null
               onPickDate: function (iso) {
                 if (!root.model) return
@@ -274,22 +362,27 @@ Ui.Panel {
             }
 
             CycleView {
-              visible: !root.showingSettings && root.activeView === "cycle"
+              visible: !root.showingOverlay && root.activeView === "cycle"
               cycle: root.model && root.model.view ? root.model.view.cycle : null
               day: root.model && root.model.view ? root.model.view.selected : null
               ruleShort: root.model && root.model.view && root.model.view.rule ? root.model.view.rule.short : ""
             }
 
             SabbathsView {
-              visible: !root.showingSettings && root.activeView === "sabbaths"
+              visible: !root.showingOverlay && root.activeView === "sabbaths"
               sabbaths: root.model && root.model.view ? root.model.view.sabbaths : []
               ruleShort: root.model && root.model.view && root.model.view.rule ? root.model.view.rule.short : ""
               onPickDate: function (iso) { if (root.model) root.model.selectDate(iso) }
             }
 
             EclipsesView {
-              visible: !root.showingSettings && root.activeView === "eclipses"
+              visible: !root.showingOverlay && root.activeView === "eclipses"
               eclipses: root.model && root.model.view ? root.model.view.eclipses : []
+            }
+
+            HotkeysView {
+              visible: root.showingHotkeys
+              onInvoked: function (id) { root.runHotkey(id) }
             }
 
             SettingsView {
@@ -333,17 +426,6 @@ Ui.Panel {
                 settingsView.syncFields(true)
                 root.commitShared()
               }
-            }
-
-            Text {
-              width: parent.width
-              visible: !root.showingSettings
-              text: "1–5 tabs · arrows move the date · T today · N new · F full · B sabbath · G settings · Esc closes"
-              color: Color.popups.text
-              opacity: 0.45
-              wrapMode: Text.WordWrap
-              font.family: Style.font.family
-              font.pixelSize: Style.font.caption
             }
           }
         }
