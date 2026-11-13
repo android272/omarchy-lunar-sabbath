@@ -9,6 +9,22 @@ Column {
   property bool viewingToday: true
   property string basisLabel: ""
 
+  readonly property bool skyReady: root.day && root.day.hasLocation === true
+  readonly property string riseValue: {
+    if (!root.skyReady) return "—"
+    return root.day.moonrise !== "" ? root.day.moonrise : "None"
+  }
+  readonly property string setValue: {
+    if (!root.skyReady) return "—"
+    return root.day.moonset !== "" ? root.day.moonset : "None"
+  }
+  readonly property string horizonValue: root.skyReady && root.day.horizonLabel ? root.day.horizonLabel : "—"
+  readonly property var skyMetrics: [
+    { icon: "rise", label: "Moonrise", value: root.riseValue },
+    { icon: "set", label: "Moonset", value: root.setValue },
+    { icon: "horizon", label: "Horizon", value: root.horizonValue }
+  ]
+
   spacing: Style.spacing.md
   width: parent ? parent.width : implicitWidth
 
@@ -96,6 +112,78 @@ Column {
     }
   }
 
+  Rectangle {
+    id: skyBox
+    width: parent.width
+    implicitHeight: Style.space(88)
+    radius: Style.space(6)
+    color: Util.alpha(Color.popups.text, 0.05)
+    border.width: 1
+    border.color: Util.alpha(Color.popups.text, 0.16)
+
+    Row {
+      anchors.fill: parent
+
+      Repeater {
+        model: root.skyMetrics
+
+        delegate: Item {
+          id: skyCell
+          required property var modelData
+          required property int index
+          width: skyBox.width / 3
+          height: skyBox.height
+
+          Rectangle {
+            visible: skyCell.index > 0
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            width: 1
+            height: parent.height - Style.space(20)
+            color: Util.alpha(Color.popups.text, 0.16)
+          }
+
+          Column {
+            anchors.centerIn: parent
+            width: parent.width - Style.space(8)
+            spacing: Style.space(3)
+
+            Item {
+              width: parent.width
+              height: skyMark.implicitHeight
+              SkyIcon {
+                id: skyMark
+                anchors.horizontalCenter: parent.horizontalCenter
+                name: skyCell.modelData.icon
+                size: Style.space(18)
+                color: Color.popups.text
+              }
+            }
+            Text {
+              width: parent.width
+              text: skyCell.modelData.label
+              color: Color.popups.text
+              opacity: 0.6
+              horizontalAlignment: Text.AlignHCenter
+              font.family: Style.font.family
+              font.pixelSize: Style.font.caption
+            }
+            Text {
+              width: parent.width
+              text: skyCell.modelData.value
+              color: Color.popups.text
+              horizontalAlignment: Text.AlignHCenter
+              elide: Text.ElideRight
+              font.family: Style.font.family
+              font.pixelSize: Style.font.body
+              font.bold: true
+            }
+          }
+        }
+      }
+    }
+  }
+
   Text {
     width: parent.width
     text: root.day ? root.day.riseSetNote : ""
@@ -106,49 +194,6 @@ Column {
     horizontalAlignment: Text.AlignHCenter
     font.family: Style.font.family
     font.pixelSize: Style.font.bodySmall
-  }
-
-  Row {
-    width: parent.width
-    spacing: Style.spacing.lg
-    visible: root.day && (root.day.moonrise !== "" || root.day.moonset !== "")
-
-    Column {
-      width: (parent.width - parent.spacing) / 2
-      spacing: Style.space(2)
-      Text {
-        text: "Moonrise"
-        color: Color.popups.text
-        opacity: 0.6
-        font.family: Style.font.family
-        font.pixelSize: Style.font.caption
-      }
-      Text {
-        text: root.day && root.day.moonrise !== "" ? root.day.moonrise : "None"
-        color: Color.popups.text
-        font.family: Style.font.family
-        font.pixelSize: Style.font.body
-        font.bold: true
-      }
-    }
-    Column {
-      width: (parent.width - parent.spacing) / 2
-      spacing: Style.space(2)
-      Text {
-        text: "Moonset"
-        color: Color.popups.text
-        opacity: 0.6
-        font.family: Style.font.family
-        font.pixelSize: Style.font.caption
-      }
-      Text {
-        text: root.day && root.day.moonset !== "" ? root.day.moonset : "None"
-        color: Color.popups.text
-        font.family: Style.font.family
-        font.pixelSize: Style.font.body
-        font.bold: true
-      }
-    }
   }
 
   Text {

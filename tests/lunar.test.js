@@ -189,6 +189,60 @@ if (view.now.moonrise || view.now.moonset) {
   check("polar-style note when no crossing", view.now.riseSetNote.length > 0, view.now.riseSetNote)
 }
 
+function expectHorizonLabel(alt) {
+  const rounded = Math.round(alt)
+  const magnitude = Math.abs(rounded)
+  if (magnitude === 0) return "0°"
+  return (rounded > 0 ? "above " : "below ") + magnitude + "°"
+}
+
+const nowAlt = context.moonLimbAltitude(
+  context.jdFromUnixMs(Date.parse("2026-11-05T18:00:00Z")),
+  31.7683,
+  35.2137
+)
+check(
+  "today horizon matches current limb altitude",
+  view.now.hasLocation === true
+    && view.now.horizonDegrees === Math.round(nowAlt)
+    && view.now.horizonLabel === expectHorizonLabel(nowAlt),
+  view.now.horizonLabel + " deg " + view.now.horizonDegrees + " alt " + nowAlt
+)
+
+const otherDay = context.buildView({
+  nowMs: Date.parse("2026-11-05T18:00:00Z"),
+  selectedIso: "2026-11-06",
+  ruleId: "days-8-15-22-29",
+  basisId: "conjunction",
+  locationConfigured: true,
+  latitude: 31.7683,
+  longitude: 35.2137,
+  timeZone: "Asia/Jerusalem",
+  locationLabel: "Jerusalem",
+  weekStart: 0
+})
+const nowClock = context.zoneParts(Date.parse("2026-11-05T18:00:00Z"), "Asia/Jerusalem")
+const otherMs = context.utcMsFromLocal(2026, 11, 6, nowClock.hour, nowClock.minute, "Asia/Jerusalem")
+const otherAlt = context.moonLimbAltitude(context.jdFromUnixMs(otherMs), 31.7683, 35.2137)
+check(
+  "other date horizon uses the same local clock",
+  otherDay.selected.horizonLabel === expectHorizonLabel(otherAlt)
+    && otherDay.selected.horizonDegrees === Math.round(otherAlt),
+  otherDay.selected.horizonLabel + " vs " + expectHorizonLabel(otherAlt)
+)
+check(
+  "today horizon stays on the current instant while browsing",
+  otherDay.now.horizonLabel === view.now.horizonLabel,
+  otherDay.now.horizonLabel
+)
+
+const unlocated = context.daySnapshot("2026-11-05", "Asia/Jerusalem", "days-8-15-22-29", "conjunction", null, null, [])
+check(
+  "horizon hidden without a location",
+  unlocated.hasLocation === false && unlocated.horizonLabel === "" && unlocated.horizonDegrees === null,
+  unlocated.riseSetNote
+)
+
 const solarCard = view.eclipses.find((event) => event.kind === "solar")
 check(
   "next solar from Nov 2026 is annular",

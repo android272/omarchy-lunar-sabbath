@@ -1006,7 +1006,22 @@ function lunarDayOf(iso, month) {
   return daysBetween(month.start, iso) + 1
 }
 
-function daySnapshot(iso, timeZone, ruleId, basisId, latitude, longitude, cache) {
+function clockOnDate(iso, timeZone, utcMs) {
+  var parts = parseIso(iso)
+  var clock = zoneParts(utcMs, timeZone)
+  return utcMsFromLocal(parts.year, parts.month, parts.day, clock.hour, clock.minute, timeZone)
+}
+
+function horizonReading(utcMs, latitude, longitude) {
+  var alt = moonLimbAltitude(jdFromUnixMs(utcMs), latitude, longitude)
+  var rounded = Math.round(alt)
+  var magnitude = Math.abs(rounded)
+  var label = "0°"
+  if (magnitude !== 0) label = (rounded > 0 ? "above " : "below ") + magnitude + "°"
+  return { degrees: rounded, above: alt >= 0, label: label }
+}
+
+function daySnapshot(iso, timeZone, ruleId, basisId, latitude, longitude, cache, atMs) {
   var parts = parseIso(iso)
   var noonMs = utcMsFromLocal(parts.year, parts.month, parts.day, 12, 0, timeZone)
   var jd = jdFromUnixMs(noonMs)
@@ -1019,13 +1034,21 @@ function daySnapshot(iso, timeZone, ruleId, basisId, latitude, longitude, cache)
   var rise = ""
   var set = ""
   var note = ""
-  if (latitude === null || latitude === undefined || longitude === null || longitude === undefined) {
-    note = "Set a location to see moonrise and moonset."
+  var horizonLabel = ""
+  var horizonDegrees = null
+  var located = !(latitude === null || latitude === undefined || longitude === null || longitude === undefined)
+  if (!located) {
+    note = "Set a location to see moonrise, moonset, and the horizon."
   } else {
     var events = riseSet(iso, timeZone, latitude, longitude)
     rise = events.rise
     set = events.set
     note = events.note
+    if (typeof atMs === "number") {
+      var horizon = horizonReading(atMs, latitude, longitude)
+      horizonLabel = horizon.label
+      horizonDegrees = horizon.degrees
+    }
   }
   return {
     iso: iso,
@@ -1044,9 +1067,12 @@ function daySnapshot(iso, timeZone, ruleId, basisId, latitude, longitude, cache)
     nextMonthStart: month.nextStart,
     status: status,
     isSabbath: status.isSabbath,
+    hasLocation: located,
     moonrise: rise,
     moonset: set,
-    riseSetNote: note
+    riseSetNote: note,
+    horizonLabel: horizonLabel,
+    horizonDegrees: horizonDegrees
   }
 }
 
@@ -1320,8 +1346,10 @@ function buildView(opts) {
   var selected = parseIso(opts.selectedIso) ? opts.selectedIso : today
   var weekStart = typeof opts.weekStart === "number" ? opts.weekStart : 0
   var cache = monthCache()
-  var nowSnap = daySnapshot(today, timeZone, rule.id, basis.id, lat, lon, cache)
-  var selectedSnap = selected === today ? nowSnap : daySnapshot(selected, timeZone, rule.id, basis.id, lat, lon, cache)
+  var nowSnap = daySnapshot(today, timeZone, rule.id, basis.id, lat, lon, cache, nowMs)
+  var selectedSnap = selected === today
+    ? nowSnap
+    : daySnapshot(selected, timeZone, rule.id, basis.id, lat, lon, cache, clockOnDate(selected, timeZone, nowMs))
   var until = daysUntilSabbath(today, timeZone, rule.id, basis.id)
   var fromMs = selected === today ? nowMs : utcMsFromLocal(parseIso(selected).year, parseIso(selected).month, parseIso(selected).day, 12, 0, timeZone)
   return {

@@ -26,6 +26,7 @@ fi
 
 qml_files=(
   MoonDisk.qml
+  SkyIcon.qml
   TextButton.qml
   TonightView.qml
   CalendarView.qml
