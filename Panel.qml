@@ -439,35 +439,74 @@ Ui.Panel {
           anchors.right: mainFlick.right
           anchors.bottom: parent.bottom
           spacing: Style.spacing.sm
+
+          // The arrow buttons stay as wide as their labels and sit on the
+          // content edges. The five labeled buttons share the leftover width
+          // in equal amounts, so the row fills the card inside its padding.
+          function labeledWidth(index) {
+            var labeled = [prevSabbath, prevPhase, todayButton, nextPhase, nextSabbath]
+            var count = labeled.length
+            var button = labeled[index]
+            if (!button || !prevDay || !nextDay || width < 1) return button ? button.implicitWidth : 0
+            var naturalSum = 0
+            var i
+            for (i = 0; i < count; i++) {
+              if (!labeled[i]) return button.implicitWidth
+              naturalSum += labeled[i].implicitWidth
+            }
+            var budget = width - spacing * (count + 1) - prevDay.implicitWidth - nextDay.implicitWidth
+            if (budget < 1 || naturalSum < 1) return button.implicitWidth
+            var extra = (budget - naturalSum) / count
+            if (index < count - 1) return button.implicitWidth + extra
+            var used = 0
+            for (i = 0; i < count - 1; i++) used += labeled[i].implicitWidth + extra
+            return budget - used
+          }
+
           TextButton {
+            id: prevDay
             label: "<"
             accessibleName: "Previous day"
             onClicked: if (root.model) root.model.stepDate(-1)
           }
           TextButton {
+            id: prevSabbath
+            width: dayNav.labeledWidth(0)
             label: "< Sabbath"
             accessibleName: "Previous Sabbath"
             gold: true
             onClicked: if (root.model) root.model.jumpToPreviousSabbath()
           }
           TextButton {
+            id: prevPhase
+            width: dayNav.labeledWidth(1)
             label: "< Phase"
             accessibleName: "Previous moon phase"
             onClicked: if (root.model) root.model.jumpPhaseBy(-1)
           }
-          TextButton { label: "Today"; onClicked: if (root.model) root.model.jumpToday() }
           TextButton {
+            id: todayButton
+            width: dayNav.labeledWidth(2)
+            label: "Today"
+            onClicked: if (root.model) root.model.jumpToday()
+          }
+          TextButton {
+            id: nextPhase
+            width: dayNav.labeledWidth(3)
             label: "Phase >"
             accessibleName: "Next moon phase"
             onClicked: if (root.model) root.model.jumpPhaseBy(1)
           }
           TextButton {
+            id: nextSabbath
+            width: dayNav.labeledWidth(4)
             label: "Sabbath >"
             accessibleName: "Next Sabbath"
             gold: true
             onClicked: if (root.model) root.model.jumpToNextSabbath(false)
           }
           TextButton {
+            id: nextDay
             label: ">"
             accessibleName: "Next day"
             onClicked: if (root.model) root.model.stepDate(1)
