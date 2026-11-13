@@ -7,7 +7,7 @@ Column {
   property var day: null
   property var phases: []
   property bool viewingToday: true
-  property string basisLabel: ""
+  property string basisFooter: ""
 
   readonly property bool skyReady: root.day && root.day.hasLocation === true
   readonly property string riseValue: {
@@ -243,10 +243,11 @@ Column {
 
   Text {
     width: parent.width
-    text: "Basis: " + root.basisLabel + ". Lunar days are local dates, midnight to midnight."
+    text: root.basisFooter
     color: Color.popups.text
     opacity: 0.55
     wrapMode: Text.WordWrap
+    horizontalAlignment: Text.AlignHCenter
     font.family: Style.font.family
     font.pixelSize: Style.font.caption
   }

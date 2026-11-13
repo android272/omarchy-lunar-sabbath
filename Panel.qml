@@ -337,7 +337,7 @@ Ui.Panel {
               day: root.model && root.model.view ? root.model.view.selected : null
               phases: root.model && root.model.view ? root.model.view.phases : []
               viewingToday: root.model && root.model.view ? root.model.view.isToday : true
-              basisLabel: root.model && root.model.view && root.model.view.basis ? root.model.view.basis.label : ""
+              basisFooter: root.model && root.model.view && root.model.view.basis ? root.model.view.basis.footer : ""
             }
 
             CalendarView {

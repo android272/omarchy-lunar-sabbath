@@ -20,7 +20,7 @@ Item {
     day: model.view ? model.view.selected : null
     phases: model.view ? model.view.phases : []
     viewingToday: model.view ? model.view.isToday : true
-    basisLabel: model.view && model.view.basis ? model.view.basis.label : ""
+    basisFooter: model.view && model.view.basis ? model.view.basis.footer : ""
   }
 
   CalendarView {

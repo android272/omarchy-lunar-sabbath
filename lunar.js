@@ -534,9 +534,24 @@ function ruleCatalog() {
 
 function basisCatalog() {
   return [
-    { id: "conjunction", label: "Calculated conjunction", detail: "Lunar day 1 is the local date of the astronomical new moon." },
-    { id: "crescent-1", label: "First crescent, +1 day", detail: "Lunar day 1 is the local day after the conjunction." },
-    { id: "crescent-2", label: "First crescent, +2 days", detail: "Lunar day 1 is two local days after the conjunction." }
+    {
+      id: "conjunction",
+      label: "Calculated conjunction",
+      footer: "Calculated conjunction · midnight-to-midnight",
+      detail: "Lunar day 1 is the local date of the astronomical new moon."
+    },
+    {
+      id: "crescent-1",
+      label: "First crescent, +1 day",
+      footer: "Crescent +1 day · midnight-to-midnight",
+      detail: "Lunar day 1 is the local day after the conjunction."
+    },
+    {
+      id: "crescent-2",
+      label: "First crescent, +2 days",
+      footer: "Crescent +2 days · midnight-to-midnight",
+      detail: "Lunar day 1 is two local days after the conjunction."
+    }
   ]
 }
 

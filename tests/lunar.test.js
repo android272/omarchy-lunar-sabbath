@@ -142,6 +142,13 @@ check(
 )
 check("eclipse cards", view.eclipses.length === 2, view.eclipses.map((e) => e.type).join(", "))
 check("rule label", view.rule.short === "Rule: 1/8/15/22/29")
+check(
+  "tonight footer labels",
+  context.basisById("conjunction").footer === "Calculated conjunction · midnight-to-midnight"
+    && context.basisById("crescent-1").footer === "Crescent +1 day · midnight-to-midnight"
+    && context.basisById("crescent-2").footer === "Crescent +2 days · midnight-to-midnight"
+    && view.basis.footer === "Calculated conjunction · midnight-to-midnight"
+)
 const flagsOk = view.calendar.cells.every((cell) => {
   const status = context.dayStatus("days-8-15-22-29", cell.lunarDay, view.now.monthLength, context.weekdayOf(cell.iso, "Asia/Jerusalem"))
   return status.isSabbath === cell.isSabbath || cell.lunarDay !== status.lunarDay
