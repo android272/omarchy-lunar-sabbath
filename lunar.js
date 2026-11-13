@@ -1110,6 +1110,22 @@ function sabbathsFrom(today, timeZone, ruleId, basisId, count) {
   return list
 }
 
+function previousSabbathIso(iso, timeZone, ruleId, basisId) {
+  if (!parseIso(iso)) return ""
+  var cache = monthCache()
+  var cursor = addDays(iso, -1)
+  var guard = 0
+  // Sabbaths are at most about ten days apart. Forty days is a hard stop.
+  while (guard < 40) {
+    var month = monthContaining(cursor, timeZone, basisId, cache)
+    var status = dayStatus(ruleId, lunarDayOf(cursor, month), month.length, weekdayOf(cursor, timeZone))
+    if (status.isSabbath) return cursor
+    cursor = addDays(cursor, -1)
+    guard += 1
+  }
+  return ""
+}
+
 function calendarMonth(iso, today, selected, timeZone, ruleId, basisId, weekStart) {
   var parts = parseIso(iso)
   var first = isoFromParts(parts.year, parts.month, 1)

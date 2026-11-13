@@ -339,11 +339,6 @@ Ui.Panel {
               viewingToday: root.model && root.model.view ? root.model.view.isToday : true
               basisLabel: root.model && root.model.view && root.model.view.basis ? root.model.view.basis.label : ""
               onJumpPhase: function (angle) { if (root.model) root.model.jumpToPhase(angle) }
-              onJumpSabbath: {
-                if (!root.model) return
-                root.model.jumpToNextSabbath()
-                root.showView("sabbaths")
-              }
             }
 
             CalendarView {
@@ -450,7 +445,19 @@ Ui.Panel {
             accessibleName: "Previous day"
             onClicked: if (root.model) root.model.stepDate(-1)
           }
+          TextButton {
+            label: "< Sabbath"
+            accessibleName: "Previous Sabbath"
+            gold: true
+            onClicked: if (root.model) root.model.jumpToPreviousSabbath()
+          }
           TextButton { label: "Today"; onClicked: if (root.model) root.model.jumpToday() }
+          TextButton {
+            label: "Sabbath >"
+            accessibleName: "Next Sabbath"
+            gold: true
+            onClicked: if (root.model) root.model.jumpToNextSabbath(false)
+          }
           TextButton {
             label: ">"
             accessibleName: "Next day"

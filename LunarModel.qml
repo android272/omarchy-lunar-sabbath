@@ -322,7 +322,13 @@ Item {
     root.refresh()
   }
 
-  function jumpToNextSabbath() {
+  function jumpToPreviousSabbath() {
+    var iso = Lunar.previousSabbathIso(root.resolvedIso(), root.activeZone(), root.ruleId, root.basisId)
+    if (iso) root.selectedIso = iso
+    root.refresh()
+  }
+
+  function jumpToNextSabbath(showSabbaths) {
     root.refresh()
     var iso = root.resolvedIso()
     var list = root.view && root.view.sabbaths ? root.view.sabbaths : []
@@ -336,7 +342,9 @@ Item {
     }
     if (!target && root.view && root.view.nextSabbathIso) target = root.view.nextSabbathIso
     if (target) root.selectedIso = target
-    root.pendingView = "sabbaths"
+    // The bottom button only moves the date. The B hotkey still asks the
+    // next open to land on Sabbaths.
+    if (showSabbaths !== false) root.pendingView = "sabbaths"
     root.refresh()
   }
 

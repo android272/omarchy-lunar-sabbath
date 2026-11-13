@@ -9,7 +9,6 @@ Column {
   property bool viewingToday: true
   property string basisLabel: ""
   signal jumpPhase(int angle)
-  signal jumpSabbath()
 
   spacing: Style.spacing.md
   width: parent ? parent.width : implicitWidth
@@ -208,11 +207,6 @@ Column {
     TextButton {
       label: "Next full"
       onClicked: root.jumpPhase(180)
-    }
-    TextButton {
-      label: "Next Sabbath"
-      gold: true
-      onClicked: root.jumpSabbath()
     }
   }
 

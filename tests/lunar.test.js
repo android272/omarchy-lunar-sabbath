@@ -130,6 +130,16 @@ check("view has phase", !!view.now.phaseName, JSON.stringify(view.now))
 check("today heading", view.isToday && view.now.headingDate === "Thursday, Nov 5", view.now.headingDate)
 check("calendar has 42 days", view.calendar.cells.length === 42)
 check("sabbath list", view.sabbaths.length === 8, String(view.sabbaths.length))
+const prevOfSecond = context.previousSabbathIso(view.sabbaths[1].iso, "Asia/Jerusalem", "days-8-15-22-29", "conjunction")
+check("previous sabbath is the prior one", prevOfSecond === view.sabbaths[0].iso, prevOfSecond + " vs " + view.sabbaths[0].iso)
+const prevOfFirst = context.previousSabbathIso(view.sabbaths[0].iso, "Asia/Jerusalem", "days-8-15-22-29", "conjunction")
+const prevSnap = context.daySnapshot(prevOfFirst, "Asia/Jerusalem", "days-8-15-22-29", "conjunction", null, null, [])
+check("previous sabbath is earlier and marked", prevOfFirst < view.sabbaths[0].iso && prevSnap.isSabbath, prevOfFirst)
+check(
+  "saturday previous is seven days back",
+  context.previousSabbathIso("2026-11-08", "UTC", "week-saturday", "conjunction") === "2026-11-07"
+    && context.previousSabbathIso("2026-11-07", "UTC", "week-saturday", "conjunction") === "2026-10-31"
+)
 check("eclipse cards", view.eclipses.length === 2, view.eclipses.map((e) => e.type).join(", "))
 check("rule label", view.rule.short === "Rule: 1/8/15/22/29")
 const flagsOk = view.calendar.cells.every((cell) => {
