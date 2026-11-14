@@ -29,6 +29,7 @@ Item {
   }
 
   CycleView {
+    id: cycleView
     width: 460
     cycle: model.view ? model.view.cycle : null
     day: model.view ? model.view.selected : null
@@ -69,10 +70,11 @@ Item {
       var phase = model.view && model.view.now ? model.view.now.phaseName : ""
       var cells = model.view && model.view.calendar && model.view.calendar.cells
         ? model.view.calendar.cells.length : 0
-      if (model.ready && phase && cells === 42)
+      var strip = cycleView.phaseStripOk()
+      if (model.ready && phase && cells === 42 && strip)
         console.log("PartsSmoke: views loaded OK " + phase)
       else
-        console.log("PartsSmoke: views failed ready " + model.ready + " cells " + cells)
+        console.log("PartsSmoke: views failed ready " + model.ready + " cells " + cells + " strip " + strip)
       Qt.quit()
     }
   }
