@@ -11,12 +11,31 @@ Column {
   spacing: Style.spacing.md
   width: parent ? parent.width : implicitWidth
 
-  Row {
+  // Prev is on the left edge and Next is on the right edge. The month is
+  // centered on the calendar, not in the gap between the buttons.
+  Item {
+    id: monthNav
     width: parent.width
-    spacing: Style.spacing.sm
-    TextButton { label: "Prev"; onClicked: root.shiftMonth(-1) }
+    implicitHeight: Math.max(prevMonth.implicitHeight, nextMonth.implicitHeight, monthLabel.implicitHeight)
+    height: implicitHeight
+
+    TextButton {
+      id: prevMonth
+      anchors.left: parent.left
+      anchors.verticalCenter: parent.verticalCenter
+      label: "Prev"
+      onClicked: root.shiftMonth(-1)
+    }
+    TextButton {
+      id: nextMonth
+      anchors.right: parent.right
+      anchors.verticalCenter: parent.verticalCenter
+      label: "Next"
+      onClicked: root.shiftMonth(1)
+    }
     Text {
-      width: parent.width - Style.space(140)
+      id: monthLabel
+      anchors.horizontalCenter: parent.horizontalCenter
       anchors.verticalCenter: parent.verticalCenter
       text: root.calendar ? root.calendar.label : ""
       color: Color.popups.text
@@ -24,9 +43,7 @@ Column {
       font.family: Style.font.family
       font.pixelSize: Style.font.body
       font.bold: true
-      elide: Text.ElideRight
     }
-    TextButton { label: "Next"; onClicked: root.shiftMonth(1) }
   }
 
   Row {
