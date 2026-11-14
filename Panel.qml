@@ -14,17 +14,28 @@ Ui.Panel {
   property var hostWidget: null
   property var model: null
   property string activeView: "tonight"
+  onModelChanged: root.applyRememberedView()
   property bool showingSettings: false
   property bool showingHotkeys: false
   readonly property bool showingOverlay: showingSettings || showingHotkeys
   readonly property var barIdentity: hostWidget || root
 
+  function applyRememberedView() {
+    if (!root.model || root.model.pendingView) return
+    var name = root.model.lastView
+    if (!name || root.activeView === name) return
+    root.activeView = name
+  }
+
   function open() {
     root.showingSettings = false
     root.showingHotkeys = false
     if (root.model && root.model.pendingView) {
-      root.activeView = root.model.pendingView
+      var queued = root.model.pendingView
       root.model.pendingView = ""
+      root.showView(queued)
+    } else {
+      root.applyRememberedView()
     }
     root.controller.show()
     if (root.model) root.model.refresh()
@@ -58,6 +69,11 @@ Ui.Panel {
     root.showingSettings = false
     root.showingHotkeys = false
     root.activeView = name
+    // An explicit tab wins over a queued N, F, or B landing.
+    if (root.model) {
+      root.model.pendingView = ""
+      root.model.setLastView(name)
+    }
     mainFlick.contentY = 0
     if (root.opened) keyCatcher.forceActiveFocus()
   }
@@ -144,6 +160,12 @@ Ui.Panel {
     if (!selected || !selected.headingDate) return ""
     if (view.isToday) return "Tonight - " + selected.headingDate
     return selected.headingDate
+  }
+
+  Connections {
+    target: root.model
+    ignoreUnknownSignals: true
+    function onLastViewChanged() { root.applyRememberedView() }
   }
 
   Ui.KeyboardPanel {

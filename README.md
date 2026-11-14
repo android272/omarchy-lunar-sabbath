@@ -10,7 +10,7 @@ Vibecoded: built with AI assistance rather than typed by hand.
 
 The widget is separate from the clock. It draws the illuminated portion of the Moon, north up: waxing light is on the right. A new moon is a dark disk with a rim so the empty moon stays visible. Every other phase is only the lit shape, with no ring. The disk uses the bar color. On a Sabbath under the active rule it turns gold.
 
-- Left click opens the panel on Tonight.
+- Left click opens the panel on the tab you last left open. The first open is Tonight.
 - Middle click opens the panel on the next Sabbath, counting today when today is one.
 - Right click cycles the bar label: moon only, illumination percent, `S` on Sabbath days, and the word Sabbath on Sabbath days.
 - The hover tooltip shows the phase, illumination, days until the next Sabbath, and the active rule.
@@ -85,7 +85,7 @@ omarchy plugin enable lunar.sabbath
 
 Run that from the repository, not from your home directory. `cp -a .` from `~` tries to copy your home directory into the plugin folder. `enable` adds the widget to the bar. The manifest's default section is the right side. If enable says the plugin is not known, the rescan line above is the one to run; the command is `rescanPlugins`.
 
-Settings are stored in `${XDG_STATE_HOME:-~/.local/state}/lunar-sabbath/settings.json`. The directory is mode `0700` and the file is mode `0600`. After the first save, that file wins over the `shell.json` seed (`displayMode`, `sabbathRule`, `newMoonBasis`).
+Settings are stored in `${XDG_STATE_HOME:-~/.local/state}/lunar-sabbath/settings.json`. The directory is mode `0700` and the file is mode `0600`. After the first save, that file wins over the `shell.json` seed (`displayMode`, `sabbathRule`, `newMoonBasis`). The same file stores the last selected tab.
 
 ## Checks
 

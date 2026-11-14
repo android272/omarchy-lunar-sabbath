@@ -51,8 +51,9 @@ Ui.BarWidget {
     lunarModel.pullSession()
   }
 
+  // A plain open restores the last tab. N, F, B, and middle click set
+  // pendingView when the next open should land somewhere else.
   function open() {
-    lunarModel.pendingView = "tonight"
     if (panelLoader.item && panelLoader.item.open) panelLoader.item.open()
   }
 

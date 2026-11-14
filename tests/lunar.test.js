@@ -371,6 +371,17 @@ if (lunarMar) {
       && context.neighboringPhase(fullIso, "UTC", -1).iso < fullIso
   )
 }
+check("tonight is a panel tab", context.knownView("tonight"))
+check("calendar is a panel tab", context.knownView("calendar"))
+check("cycle is a panel tab", context.knownView("cycle"))
+check("sabbaths is a panel tab", context.knownView("sabbaths"))
+check("eclipses is a panel tab", context.knownView("eclipses"))
+check("settings is not a panel tab", context.knownView("settings") === false)
+check("empty view is not a panel tab", context.knownView("") === false)
+context.remember({ lastView: "calendar", preferShellSeed: true })
+check("session keeps the selected tab", context.sessionState().lastView === "calendar")
+context.remember({ lastView: "nope" })
+check("session ignores an unknown tab", context.sessionState().lastView === "calendar")
 check("bad phase step is empty", context.neighboringPhase("nope", "UTC", 1).iso === "")
 check("zero phase direction is empty", context.neighboringPhase("2026-08-12", "UTC", 0).iso === "")
 

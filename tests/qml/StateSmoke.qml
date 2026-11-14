@@ -59,6 +59,18 @@ Item {
       Qt.quit()
       return
     }
+    model.setLastView("settings")
+    if (model.lastView !== "tonight") {
+      console.log("StateSmoke: unknown tab was stored " + model.lastView)
+      Qt.quit()
+      return
+    }
+    model.setLastView("calendar")
+    if (model.lastView !== "calendar") {
+      console.log("StateSmoke: tab was not stored " + model.lastView)
+      Qt.quit()
+      return
+    }
     console.log("StateSmoke: settings persisted OK")
     finishTimer.start()
   }

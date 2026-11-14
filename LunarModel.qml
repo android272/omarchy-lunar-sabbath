@@ -23,6 +23,7 @@ Item {
   property var savedLocations: []
   property string selectedIso: ""
   property string pendingView: ""
+  property string lastView: "tonight"
   property string locationMessage: ""
   property var view: ({})
   property bool preferShellSeed: true
@@ -101,6 +102,7 @@ Item {
     root.longitude = state.locationConfigured ? state.longitude : null
     root.timeZone = state.locationConfigured ? (state.timeZone || "") : ""
     root.savedLocations = state.savedLocations || []
+    if (root.knownView(state.lastView)) root.lastView = state.lastView
     root.preferShellSeed = state.preferShellSeed !== false
     root.suppress = false
     if (root.ready) root.refresh()
@@ -127,6 +129,10 @@ Item {
     var i
     for (i = 0; i < list.length; i++) if (list[i].id === id) return true
     return false
+  }
+
+  function knownView(id) {
+    return Lunar.knownView(id)
   }
 
   function shellValue(key) {
@@ -160,6 +166,7 @@ Item {
     if (root.knownId("basis", doc.basisId)) root.basisId = doc.basisId
     if (root.knownMode(doc.displayMode)) root.displayMode = doc.displayMode
     root.savedLocations = root.cleanPlaces(doc.savedLocations)
+    if (root.knownView(doc.lastView)) root.lastView = doc.lastView
     if (doc.locationConfigured) {
       var check = Lunar.validateLocation(doc.latitude, doc.longitude, doc.timeZone)
       if (check.ok) {
@@ -201,7 +208,8 @@ Item {
       latitude: root.latitude,
       longitude: root.longitude,
       timeZone: root.timeZone,
-      savedLocations: root.savedLocations
+      savedLocations: root.savedLocations,
+      lastView: root.lastView
     }
   }
 
@@ -231,9 +239,13 @@ Item {
     root.longitude = null
     root.timeZone = ""
     root.savedLocations = []
+    root.lastView = "tonight"
     if (!parsed) root.applySeed()
     else root.applyDocument(parsed)
-    root.preferShellSeed = !parsed
+    // A settings file normally owns the values. A tab-only save keeps the
+    // seed open so shell.json can still fill rule, basis, and location.
+    root.preferShellSeed = !parsed || parsed.preferShellSeed === true
+    if (parsed && root.preferShellSeed) root.applySeed()
     root.suppress = false
     var patch = root.snapshotFields()
     patch.preferShellSeed = root.preferShellSeed
@@ -244,7 +256,7 @@ Item {
   }
 
   // shell.json can arrive after the first empty-file load. Apply it once,
-  // until a settings file or a user change owns the values.
+  // until a user change owns the values. A remembered tab does not.
   function considerShellSeed() {
     if (!root.ready || !root.preferShellSeed || root.suppress) return
     root.suppress = true
@@ -262,8 +274,20 @@ Item {
     if (!root.ready || root.suppress) return
     var data = root.snapshotFields()
     data.version = 1
+    data.preferShellSeed = root.preferShellSeed === true
     settingsFile.setText(JSON.stringify(data, null, 2) + "\n")
     permissionsTimer.restart()
+  }
+
+  // Remember the tab without locking the shell.json seed. A tab click is not
+  // a settings change, so a late shell seed can still fill rule and location.
+  function setLastView(name) {
+    if (!root.knownView(name) || root.lastView === name) return
+    root.lastView = name
+    var patch = root.snapshotFields()
+    patch.preferShellSeed = root.preferShellSeed
+    Lunar.remember(patch)
+    root.save()
   }
 
   function setRule(id) {

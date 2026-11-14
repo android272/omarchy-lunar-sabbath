@@ -564,6 +564,10 @@ function displayModes() {
   ]
 }
 
+function knownView(id) {
+  return id === "tonight" || id === "calendar" || id === "cycle" || id === "sabbaths" || id === "eclipses"
+}
+
 function ruleById(id) {
   var list = ruleCatalog()
   var i
@@ -1401,7 +1405,8 @@ var session = {
   longitude: null,
   timeZone: "",
   savedLocations: [],
-  // True until a saved file or an explicit user change owns the settings.
+  lastView: "tonight",
+  // True until an explicit user change owns the settings. A remembered tab does not.
   preferShellSeed: true
 }
 
@@ -1438,6 +1443,7 @@ function remember(patch) {
     if (patch[keys[i]] !== undefined) session[keys[i]] = patch[keys[i]]
   }
   if (patch.savedLocations !== undefined) session.savedLocations = copyLocations(patch.savedLocations)
+  if (patch.lastView !== undefined && knownView(patch.lastView)) session.lastView = patch.lastView
 }
 
 function sessionState() {
@@ -1452,6 +1458,7 @@ function sessionState() {
     longitude: session.longitude,
     timeZone: session.timeZone || "",
     savedLocations: copyLocations(session.savedLocations),
+    lastView: knownView(session.lastView) ? session.lastView : "tonight",
     preferShellSeed: session.preferShellSeed !== false
   }
 }

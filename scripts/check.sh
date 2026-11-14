@@ -154,6 +154,10 @@ if abs(float(doc.get("latitude")) - 41.88) > 0.001 or abs(float(doc.get("longitu
 saved = doc.get("savedLocations")
 if not isinstance(saved, list) or len(saved) != 1 or saved[0].get("locationLabel") != "Runtime Test":
     raise SystemExit("saved-place list was not persisted")
+if doc.get("lastView") != "calendar":
+    raise SystemExit("persisted tab was not saved")
+if doc.get("preferShellSeed") is not False:
+    raise SystemExit("a user setting did not lock the shell seed")
 if stat.S_IMODE(path.stat().st_mode) != 0o600:
     raise SystemExit("persisted state is not mode 0600")
 if stat.S_IMODE(path.parent.stat().st_mode) != 0o700:
