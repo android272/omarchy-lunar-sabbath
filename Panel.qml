@@ -30,6 +30,7 @@ Ui.Panel {
   function open() {
     root.showingSettings = false
     root.showingHotkeys = false
+    calendarView.closePicker()
     if (root.model && root.model.pendingView) {
       var queued = root.model.pendingView
       root.model.pendingView = ""
@@ -47,6 +48,7 @@ Ui.Panel {
   function close() {
     root.showingSettings = false
     root.showingHotkeys = false
+    calendarView.closePicker()
     root.controller.hide()
   }
 
@@ -68,6 +70,7 @@ Ui.Panel {
   function showView(name) {
     root.showingSettings = false
     root.showingHotkeys = false
+    calendarView.closePicker()
     root.activeView = name
     // An explicit tab wins over a queued N, F, or B landing.
     if (root.model) {
@@ -86,6 +89,7 @@ Ui.Panel {
       return
     }
     root.showingHotkeys = false
+    calendarView.closePicker()
     root.showingSettings = true
     settingsView.syncFields(true)
     mainFlick.contentY = 0
@@ -100,6 +104,7 @@ Ui.Panel {
       return
     }
     root.showingSettings = false
+    calendarView.closePicker()
     root.showingHotkeys = true
     mainFlick.contentY = 0
     hotkeysView.resetCursor()
@@ -192,6 +197,11 @@ Ui.Panel {
       blocked: root.showingSettings && settingsView.typing
 
       onCloseRequested: {
+        if (calendarView.pickerOpen) {
+          calendarView.closePicker()
+          if (root.opened) keyCatcher.forceActiveFocus()
+          return
+        }
         if (root.showingOverlay) {
           root.showingSettings = false
           root.showingHotkeys = false
@@ -203,6 +213,10 @@ Ui.Panel {
       onMoveRequested: function (dx, dy) {
         if (root.showingHotkeys) {
           if (dy !== 0) hotkeysView.moveCursor(dy)
+          return
+        }
+        if (calendarView.pickerOpen) {
+          if (dy !== 0) calendarView.scrollYears(dy)
           return
         }
         if (root.showingOverlay || !root.model) return
@@ -219,6 +233,7 @@ Ui.Panel {
       }
 
       onTextKey: function (text) {
+        if (calendarView.pickerOpen) calendarView.closePicker()
         if (root.showingSettings || root.showingHotkeys) {
           if (text === "g" || text === "G") root.openSettings()
           else if (text === "?") root.openHotkeys()
@@ -271,7 +286,7 @@ Ui.Panel {
           contentHeight: page.implicitHeight
           boundsBehavior: Flickable.StopAtBounds
           flickableDirection: Flickable.VerticalFlick
-          interactive: contentHeight > height
+          interactive: contentHeight > height && !(calendarView.visible && calendarView.pickerOpen)
 
           onContentHeightChanged: scrollHost.syncGutter()
           onHeightChanged: scrollHost.syncGutter()
@@ -364,8 +379,12 @@ Ui.Panel {
             }
 
             CalendarView {
+              id: calendarView
               visible: !root.showingOverlay && root.activeView === "calendar"
               calendar: root.model && root.model.view ? root.model.view.calendar : null
+              onShowMonth: function (year, month) {
+                if (root.model) root.model.showMonth(year, month)
+              }
               onPickDate: function (iso) {
                 if (!root.model) return
                 root.model.selectDate(iso)

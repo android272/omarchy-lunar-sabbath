@@ -323,6 +323,13 @@ Item {
     root.refresh()
   }
 
+  function showMonth(year, month) {
+    var next = Lunar.setMonth(root.resolvedIso(), year, month)
+    if (!Lunar.parseIso(next)) return
+    root.selectedIso = next
+    root.refresh()
+  }
+
   function jumpToday() {
     root.selectedIso = ""
     root.refresh()

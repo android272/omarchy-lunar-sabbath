@@ -908,6 +908,21 @@ function shiftMonth(iso, delta) {
   return isoFromParts(year, month + 1, day)
 }
 
+// Keep the current day-of-month when jumping to another year and month.
+// A 31st lands on the last day of a shorter month.
+function setMonth(iso, year, month) {
+  year = Math.floor(Number(year))
+  month = Math.floor(Number(month))
+  if (!isFinite(year) || year < 1000 || year > 9999) return iso || ""
+  if (!isFinite(month) || month < 1 || month > 12) return iso || ""
+  var parts = parseIso(iso)
+  var day = parts ? parts.day : 1
+  var last = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  if (!(day >= 1)) day = 1
+  if (day > last) day = last
+  return isoFromParts(year, month, day)
+}
+
 function daysBetween(startIso, endIso) {
   var a = parseIso(startIso)
   var b = parseIso(endIso)

@@ -1,22 +1,96 @@
 import QtQuick
+import QtQuick.Controls as Controls
 import qs.Commons
 
-Column {
+Item {
   id: root
 
   property var calendar: null
+  property bool pickerOpen: false
+  property string pickerMode: "years"
+  property int chosenYear: 0
+  property int yearStart: 1900
+  property var yearList: []
+  property bool yearPinned: false
+
+  readonly property var monthNames: [
+    "January", "February", "March", "April",
+    "May", "June", "July", "August",
+    "September", "October", "November", "December"
+  ]
+  readonly property int pickerCell: Style.space(40)
+
   signal pickDate(string iso)
   signal shiftMonth(int delta)
+  signal showMonth(int year, int month)
 
-  spacing: Style.spacing.md
+  // The picker paints over the day grid. Keep it inside this item so the
+  // panel Flickable does not clip it, and so its height stays with the calendar.
+  implicitHeight: column.implicitHeight
+  height: implicitHeight
   width: parent ? parent.width : implicitWidth
 
-  // Prev is on the left edge and Next is on the right edge. The month is
-  // centered on the calendar, not in the gap between the buttons.
+  function openPicker() {
+    var year = root.calendar && root.calendar.year ? root.calendar.year : new Date().getFullYear()
+    var start = Math.min(1900, year - 40)
+    var end = Math.max(2200, year + 40)
+    var list = []
+    var y
+    for (y = start; y <= end; y++) list.push(y)
+    root.yearStart = start
+    root.yearList = list
+    root.chosenYear = year
+    root.pickerMode = "years"
+    root.yearPinned = false
+    root.pickerOpen = true
+    Qt.callLater(root.revealViewedYear)
+  }
+
+  function closePicker() {
+    root.pickerOpen = false
+    root.pickerMode = "years"
+  }
+
+  function togglePicker() {
+    if (root.pickerOpen) root.closePicker()
+    else root.openPicker()
+  }
+
+  function revealViewedYear() {
+    if (root.yearPinned || !root.pickerOpen || root.pickerMode !== "years") return
+    // Wait until the grid is taller than the view. An earlier pass clamps
+    // contentY to 0 and would leave the viewed year off screen.
+    if (yearFlick.height < 1 || yearFlick.contentHeight <= yearFlick.height) return
+    var year = root.calendar && root.calendar.year ? root.calendar.year : 0
+    if (year < root.yearStart) return
+    var index = year - root.yearStart
+    var pitch = root.pickerCell + yearGrid.rowSpacing
+    var rowY = Math.floor(index / 4) * pitch
+    if (rowY + root.pickerCell > yearFlick.contentHeight) return
+    var maxY = Math.max(0, yearFlick.contentHeight - yearFlick.height)
+    var next = Math.max(0, Math.min(maxY, rowY - (yearFlick.height - pitch) / 2))
+    yearFlick.contentY = next
+    if (Math.abs(yearFlick.contentY - next) < 2) root.yearPinned = true
+  }
+
+  function scrollYears(rows) {
+    if (!root.pickerOpen || root.pickerMode !== "years") return
+    var pitch = root.pickerCell + yearGrid.rowSpacing
+    var maxY = Math.max(0, yearFlick.contentHeight - yearFlick.height)
+    yearFlick.contentY = Math.max(0, Math.min(maxY, yearFlick.contentY + rows * pitch))
+  }
+
+  Column {
+    id: column
+    width: parent.width
+    spacing: Style.spacing.md
+
+  // Prev is on the left edge and Next is on the right edge. The month button
+  // fills the gap between them, with the label centered in that stretch.
   Item {
     id: monthNav
     width: parent.width
-    implicitHeight: Math.max(prevMonth.implicitHeight, nextMonth.implicitHeight, monthLabel.implicitHeight)
+    implicitHeight: Math.max(prevMonth.implicitHeight, nextMonth.implicitHeight, monthButton.implicitHeight)
     height: implicitHeight
 
     TextButton {
@@ -24,25 +98,29 @@ Column {
       anchors.left: parent.left
       anchors.verticalCenter: parent.verticalCenter
       label: "Prev"
-      onClicked: root.shiftMonth(-1)
+      onClicked: {
+        root.closePicker()
+        root.shiftMonth(-1)
+      }
     }
     TextButton {
       id: nextMonth
       anchors.right: parent.right
       anchors.verticalCenter: parent.verticalCenter
       label: "Next"
-      onClicked: root.shiftMonth(1)
+      onClicked: {
+        root.closePicker()
+        root.shiftMonth(1)
+      }
     }
-    Text {
-      id: monthLabel
-      anchors.horizontalCenter: parent.horizontalCenter
+    TextButton {
+      id: monthButton
+      x: prevMonth.width + Style.spacing.sm
+      width: Math.max(0, parent.width - prevMonth.width - nextMonth.width - Style.spacing.sm * 2)
       anchors.verticalCenter: parent.verticalCenter
-      text: root.calendar ? root.calendar.label : ""
-      color: Color.popups.text
-      horizontalAlignment: Text.AlignHCenter
-      font.family: Style.font.family
-      font.pixelSize: Style.font.body
-      font.bold: true
+      label: root.calendar ? root.calendar.label : ""
+      accessibleName: "Choose year and month"
+      onClicked: root.togglePicker()
     }
   }
 
@@ -128,5 +206,147 @@ Column {
     wrapMode: Text.WordWrap
     font.family: Style.font.family
     font.pixelSize: Style.font.caption
+  }
+  }
+
+  Item {
+    id: picker
+    visible: root.pickerOpen
+    z: 2
+    clip: true
+    // monthNav lives in the column, so it is not a sibling and cannot be an anchor target.
+    x: 0
+    y: monthNav.y + monthNav.height
+    width: parent.width
+    height: Math.max(0, parent.height - y)
+
+    Rectangle {
+      anchors.fill: parent
+      color: Color.popups.background
+      radius: Style.space(6)
+      border.width: 1
+      border.color: Util.alpha(Color.popups.text, 0.2)
+    }
+
+    MouseArea {
+      anchors.fill: parent
+      onClicked: {}
+    }
+
+    Item {
+      id: pickerBody
+      anchors.fill: parent
+      anchors.margins: Style.space(8)
+
+      Item {
+        id: yearHost
+        anchors.fill: parent
+        visible: root.pickerMode === "years"
+
+        Flickable {
+          id: yearFlick
+          anchors.left: parent.left
+          anchors.top: parent.top
+          anchors.bottom: parent.bottom
+          width: parent.width - Style.space(12)
+          contentWidth: width
+          contentHeight: yearGrid.implicitHeight
+          clip: true
+          boundsBehavior: Flickable.StopAtBounds
+          flickableDirection: Flickable.VerticalFlick
+          interactive: contentHeight > height
+          Controls.ScrollBar.vertical: yearBar
+          onHeightChanged: Qt.callLater(root.revealViewedYear)
+          onContentHeightChanged: Qt.callLater(root.revealViewedYear)
+
+          Grid {
+            id: yearGrid
+            width: yearFlick.width
+            columns: 4
+            columnSpacing: Style.space(4)
+            rowSpacing: Style.space(4)
+
+            Repeater {
+              model: root.yearList
+              delegate: TextButton {
+                required property var modelData
+                width: (yearGrid.width - yearGrid.columnSpacing * 3) / 4
+                height: root.pickerCell
+                label: String(modelData)
+                selected: root.calendar && Number(modelData) === root.calendar.year
+                onClicked: {
+                  root.chosenYear = Number(modelData)
+                  root.pickerMode = "months"
+                }
+              }
+            }
+          }
+        }
+
+        Controls.ScrollBar {
+          id: yearBar
+          anchors.top: parent.top
+          anchors.bottom: parent.bottom
+          anchors.right: parent.right
+          policy: yearFlick.contentHeight > yearFlick.height + 0.5
+            ? Controls.ScrollBar.AlwaysOn : Controls.ScrollBar.AlwaysOff
+        }
+      }
+
+      Column {
+        width: parent.width
+        spacing: Style.spacing.sm
+        visible: root.pickerMode === "months"
+
+        Item {
+          width: parent.width
+          height: yearsBack.implicitHeight
+
+          TextButton {
+            id: yearsBack
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            label: "Years"
+            accessibleName: "Back to years"
+            onClicked: root.pickerMode = "years"
+          }
+          Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.chosenYear > 0 ? String(root.chosenYear) : ""
+            color: Color.popups.text
+            font.family: Style.font.family
+            font.pixelSize: Style.font.body
+            font.bold: true
+          }
+        }
+
+        Grid {
+          id: monthGrid
+          width: parent.width
+          columns: 4
+          columnSpacing: Style.space(4)
+          rowSpacing: Style.space(4)
+
+          Repeater {
+            model: root.monthNames
+            delegate: TextButton {
+              required property var modelData
+              required property int index
+              width: (monthGrid.width - monthGrid.columnSpacing * 3) / 4
+              height: root.pickerCell
+              label: modelData
+              selected: root.calendar
+                && root.chosenYear === root.calendar.year
+                && index + 1 === root.calendar.month
+              onClicked: {
+                root.showMonth(root.chosenYear, index + 1)
+                root.closePicker()
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

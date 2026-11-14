@@ -259,6 +259,11 @@ check(
 
 check("shift month clamps short months", context.shiftMonth("2026-01-31", 1) === "2026-02-28")
 check("shift month keeps the day", context.shiftMonth("2026-01-15", -1) === "2025-12-15")
+check("set month keeps the day", context.setMonth("2026-11-13", 2024, 3) === "2024-03-13")
+check("set month clamps a short month", context.setMonth("2026-01-31", 2026, 2) === "2026-02-28")
+check("set month keeps a leap day", context.setMonth("2024-01-31", 2024, 2) === "2024-02-29")
+check("set month rejects a bad month", context.setMonth("2026-11-13", 2026, 13) === "2026-11-13")
+check("set month rejects a year outside four digits", context.setMonth("2026-11-13", 999, 1) === "2026-11-13")
 
 const citiesSource = fs.readFileSync(path.join(__dirname, "..", "cities.js"), "utf8")
   .replace(/^[\s\uFEFF]*\.pragma library;?\s*/, "")
