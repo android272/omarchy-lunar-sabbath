@@ -154,17 +154,23 @@ Item {
       delegate: Rectangle {
         id: cell
         required property var modelData
+        // Gold already owns the wash and the outline. Today takes the
+        // text-colored outline back, and the viewed Sabbath uses a stronger
+        // wash plus a thicker border so the two states stay readable.
+        readonly property color gold: "#e0b44c"
+        readonly property bool sabbath: modelData.isSabbath
+        readonly property bool today: modelData.isToday
+        readonly property bool selected: modelData.isSelected
+        readonly property bool hovered: dayMouse.containsMouse
         width: (dayGrid.width - dayGrid.columnSpacing * 6) / 7
         height: Style.space(54)
         radius: Style.space(5)
-        opacity: modelData.inMonth ? 1 : 0.38
-        color: modelData.isSabbath
-          ? Util.alpha("#e0b44c", 0.2)
-          : (modelData.isSelected ? Util.alpha(Color.popups.text, 0.12) : Util.alpha(Color.popups.text, 0.04))
-        border.width: modelData.isSabbath || modelData.isToday || modelData.isSelected ? 1 : 0
-        border.color: modelData.isSabbath
-          ? "#e0b44c"
-          : (modelData.isToday ? Color.popups.text : Util.alpha(Color.popups.text, 0.45))
+        opacity: modelData.inMonth || today || selected ? 1 : 0.38
+        color: sabbath
+          ? Util.alpha(gold, selected ? 0.52 : (hovered ? 0.34 : 0.2))
+          : Util.alpha(Color.popups.text, selected ? 0.12 : (hovered ? 0.08 : 0.04))
+        border.width: (sabbath && (today || selected)) ? 2 : ((sabbath || today || selected) ? 1 : 0)
+        border.color: today ? Color.popups.text : (sabbath ? gold : Util.alpha(Color.popups.text, 0.45))
 
         MoonDisk {
           anchors.horizontalCenter: parent.horizontalCenter
@@ -172,7 +178,7 @@ Item {
           anchors.topMargin: Style.space(4)
           size: Style.space(18)
           phaseAngleDeg: cell.modelData.phaseAngleDeg
-          sabbath: cell.modelData.isSabbath
+          sabbath: cell.sabbath
           litColor: Color.popups.text
           shadowColor: Color.popups.background
           rimColor: Util.alpha(Color.popups.text, 0.8)
@@ -182,17 +188,29 @@ Item {
           anchors.horizontalCenter: parent.horizontalCenter
           anchors.bottomMargin: Style.space(2)
           text: cell.modelData.day
-          color: cell.modelData.isSabbath ? "#e0b44c" : Color.popups.text
+          // Today keeps the theme-colored numeral, even on a Sabbath, so the
+          // gold day number does not hide the today mark.
+          color: cell.sabbath && !cell.today ? cell.gold : Color.popups.text
           font.family: Style.font.family
           font.pixelSize: Style.font.caption
-          font.bold: cell.modelData.isToday
+          font.bold: cell.today
         }
         MouseArea {
+          id: dayMouse
           anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
           onClicked: root.pickDate(cell.modelData.iso)
         }
         Accessible.role: Accessible.Button
-        Accessible.name: (cell.modelData.isSabbath ? "Sabbath " : "") + cell.modelData.iso
+        Accessible.name: {
+          var parts = []
+          if (cell.sabbath) parts.push("Sabbath")
+          if (cell.today) parts.push("today")
+          if (cell.selected) parts.push("selected")
+          parts.push(cell.modelData.iso)
+          return parts.join(" ")
+        }
         Accessible.onPressAction: root.pickDate(cell.modelData.iso)
       }
     }
