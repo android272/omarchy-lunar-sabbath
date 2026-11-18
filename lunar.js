@@ -1218,16 +1218,26 @@ function sabbathsFrom(today, timeZone, ruleId, basisId, count) {
 }
 
 function previousSabbathIso(iso, timeZone, ruleId, basisId) {
-  if (!parseIso(iso)) return ""
+  return sabbathStep(iso, timeZone, ruleId, basisId, -1)
+}
+
+function nextSabbathIso(iso, timeZone, ruleId, basisId) {
+  return sabbathStep(iso, timeZone, ruleId, basisId, 1)
+}
+
+// The Sabbaths tab lists eight Sabbaths from today. Stepping has to start at
+// the selected date, or a day past that list falls back onto today's Sabbath.
+function sabbathStep(iso, timeZone, ruleId, basisId, direction) {
+  if (!parseIso(iso) || (direction !== 1 && direction !== -1)) return ""
   var cache = monthCache()
-  var cursor = addDays(iso, -1)
+  var cursor = addDays(iso, direction)
   var guard = 0
   // Sabbaths are at most about ten days apart. Forty days is a hard stop.
   while (guard < 40) {
     var month = monthContaining(cursor, timeZone, basisId, cache)
     var status = dayStatus(ruleId, lunarDayOf(cursor, month), month.length, weekdayOf(cursor, timeZone))
     if (status.isSabbath) return cursor
-    cursor = addDays(cursor, -1)
+    cursor = addDays(cursor, direction)
     guard += 1
   }
   return ""

@@ -140,6 +140,27 @@ check(
   context.previousSabbathIso("2026-11-08", "UTC", "week-saturday", "conjunction") === "2026-11-07"
     && context.previousSabbathIso("2026-11-07", "UTC", "week-saturday", "conjunction") === "2026-10-31"
 )
+const todaySabbaths = context.sabbathsFrom("2026-11-15", "America/New_York", "days-8-15-22-29", "conjunction", 8)
+const todayFirst = todaySabbaths[0].iso
+const todayLast = todaySabbaths[todaySabbaths.length - 1].iso
+const afterWindow = context.nextSabbathIso("2027-01-08", "America/New_York", "days-8-15-22-29", "conjunction")
+check("next sabbath from 2027-01-08 stays in 2027", afterWindow > "2027-01-08" && afterWindow < "2027-01-20", afterWindow)
+check("next sabbath does not fall back to today", afterWindow !== todayFirst && todayLast < "2027-01-08", todayFirst + " window ends " + todayLast)
+let walked = "2027-01-08"
+let walkForward = true
+for (let step = 0; step < 12; step++) {
+  const next = context.nextSabbathIso(walked, "America/New_York", "days-8-15-22-29", "conjunction")
+  if (!(next > walked)) walkForward = false
+  walked = next
+}
+check("twelve next sabbaths keep moving forward past January", walkForward && walked > "2027-03-01", walked)
+const octoberNext = context.nextSabbathIso("2026-10-01", "America/New_York", "days-8-15-22-29", "conjunction")
+check("next sabbath from a past date stays nearby", octoberNext > "2026-10-01" && octoberNext < "2026-10-15", octoberNext)
+check(
+  "saturday next is seven days ahead",
+  context.nextSabbathIso("2026-11-01", "UTC", "week-saturday", "conjunction") === "2026-11-07"
+    && context.nextSabbathIso("2026-11-07", "UTC", "week-saturday", "conjunction") === "2026-11-14"
+)
 check("eclipse cards", view.eclipses.length === 2, view.eclipses.map((e) => e.type).join(", "))
 check("rule label", view.rule.short === "Rule: 1/8/15/22/29")
 check(
