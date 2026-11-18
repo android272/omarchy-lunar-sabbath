@@ -19,7 +19,7 @@ Extra labels are hidden when the bar is vertical. The mode still cycles, and the
 
 ## Panel
 
-Tonight, Calendar, Cycle, Sabbaths, and Eclipses share one selected date. The keyboard button to the left of Settings opens the hotkey list. Settings open from the cog button. Either menu closes from its X button.
+Tonight, Calendar, Cycle, Sabbaths, and Eclipses share one selected date. The Cycle tab draws one lunar month, new moon to new moon, with the dates of the principal phases. The keyboard button to the left of Settings opens the hotkey list. Settings open from the cog button. Either menu closes from its X button.
 
 Keyboard, when the panel is open and a text field is not focused:
 

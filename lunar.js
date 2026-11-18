@@ -943,6 +943,12 @@ function weekdayOf(iso, timeZone) {
   return zoneParts(noon, timeZone).weekday
 }
 
+function shortMonthDay(iso) {
+  var p = parseIso(iso)
+  if (!p) return ""
+  return MONTHS_SHORT[p.month - 1] + " " + p.day
+}
+
 function formatIso(iso, timeZone) {
   var p = parseIso(iso)
   if (!p) return ""
@@ -1268,20 +1274,46 @@ function rotatedWeekdays(weekStart) {
   return names
 }
 
-function cycleFor(snap, timeZone, ruleId) {
-  var markers = []
-  var iso = snap.monthStart
-  while (iso < snap.nextMonthStart) {
-    var lunarDay = daysBetween(snap.monthStart, iso) + 1
-    var status = dayStatus(ruleId, lunarDay, snap.monthLength, weekdayOf(iso, timeZone))
-    if (status.isSabbath) {
-      markers.push({
-        lunarDay: lunarDay,
-        fraction: (lunarDay - 0.5) / snap.monthLength,
-        label: ruleId === "week-saturday" ? WEEKDAYS_SHORT[weekdayOf(iso, timeZone)] : ("Day " + lunarDay)
-      })
+// The cycle bar is new moon to new moon. Each phase marker sits at the same
+// fraction as the lunar day it falls on, so the moon strip, the progress fill,
+// and the date labels share one timeline.
+var CYCLE_PHASE_POINTS = [
+  { angle: 0, name: "New Moon", showDate: true, endpoint: "start" },
+  { angle: 45, name: "Waxing Crescent", showDate: false },
+  { angle: 90, name: "First Quarter", showDate: true },
+  { angle: 135, name: "Waxing Gibbous", showDate: false },
+  { angle: 180, name: "Full Moon", showDate: true },
+  { angle: 225, name: "Waning Gibbous", showDate: false },
+  { angle: 270, name: "Last Quarter", showDate: true },
+  { angle: 315, name: "Waning Crescent", showDate: false },
+  { angle: 0, name: "Next New Moon", showDate: true, endpoint: "end" }
+]
+
+function cycleFor(snap, timeZone) {
+  var startParts = parseIso(snap.monthStart)
+  var startMs = utcMsFromLocal(startParts.year, startParts.month, startParts.day, 0, 0, timeZone)
+  var startJd = jdFromUnixMs(startMs)
+  var phaseMarkers = []
+  var i
+  for (i = 0; i < CYCLE_PHASE_POINTS.length; i++) {
+    var point = CYCLE_PHASE_POINTS[i]
+    var iso = snap.monthStart
+    var fraction = 0
+    if (point.endpoint === "end") {
+      iso = snap.nextMonthStart
+      fraction = 1
+    } else if (point.endpoint !== "start") {
+      iso = localIso(unixMsFromJd(nextPhaseJd(startJd, point.angle)), timeZone)
+      fraction = (daysBetween(snap.monthStart, iso) + 0.5) / snap.monthLength
     }
-    iso = addDays(iso, 1)
+    phaseMarkers.push({
+      angle: point.angle,
+      name: point.name,
+      showDate: point.showDate,
+      fraction: fraction,
+      iso: iso,
+      dateLabel: shortMonthDay(iso)
+    })
   }
   var progress = (snap.lunarDay - 0.5) / snap.monthLength
   return {
@@ -1289,7 +1321,9 @@ function cycleFor(snap, timeZone, ruleId) {
     lunarDay: snap.lunarDay,
     monthLength: snap.monthLength,
     daysRemaining: Math.max(0, snap.monthLength - snap.lunarDay),
-    markers: markers
+    startDate: shortMonthDay(snap.monthStart),
+    endDate: shortMonthDay(snap.nextMonthStart),
+    phaseMarkers: phaseMarkers
   }
 }
 
@@ -1404,7 +1438,7 @@ function buildView(opts) {
     phases: upcomingPhases(fromMs, timeZone),
     sabbaths: sabbathsFrom(today, timeZone, rule.id, basis.id, 8),
     calendar: calendarMonth(selected, today, selected, timeZone, rule.id, basis.id, weekStart),
-    cycle: cycleFor(selectedSnap, timeZone, rule.id),
+    cycle: cycleFor(selectedSnap, timeZone),
     eclipses: eclipseCards(nowMs, timeZone, lat, lon)
   }
 }

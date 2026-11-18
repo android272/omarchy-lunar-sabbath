@@ -379,6 +379,77 @@ if (lunarMar) {
 check("tonight is a panel tab", context.knownView("tonight"))
 check("calendar is a panel tab", context.knownView("calendar"))
 check("cycle is a panel tab", context.knownView("cycle"))
+
+function cycleForDate(iso, rule, basis) {
+  const snap = context.daySnapshot(iso, "America/New_York", rule, basis || "conjunction", null, null, null)
+  return { snap, cycle: context.cycleFor(snap, "America/New_York") }
+}
+const november = cycleForDate("2026-11-15", "days-8-15-22-29")
+check(
+  "cycle runs from new moon to new moon",
+  november.cycle.phaseMarkers[0].iso === november.snap.monthStart
+    && november.cycle.phaseMarkers[november.cycle.phaseMarkers.length - 1].iso === november.snap.nextMonthStart,
+  november.cycle.phaseMarkers.map((mark) => mark.iso).join(", ")
+)
+check(
+  "cycle names its opening and closing dates",
+  november.cycle.startDate === "Nov 9" && november.cycle.endDate === "Dec 8",
+  november.cycle.startDate + " / " + november.cycle.endDate
+)
+check(
+  "cycle phase dates follow the moon",
+  november.cycle.phaseMarkers.map((mark) => mark.name + " " + mark.dateLabel).join(", ")
+    === "New Moon Nov 9, Waxing Crescent Nov 13, First Quarter Nov 17, Waxing Gibbous Nov 21, Full Moon Nov 24, Waning Gibbous Nov 27, Last Quarter Dec 1, Waning Crescent Dec 4, Next New Moon Dec 8",
+  november.cycle.phaseMarkers.map((mark) => mark.name + " " + mark.dateLabel).join(", ")
+)
+check(
+  "cycle phase markers share the progress timeline",
+  november.cycle.phaseMarkers.every((mark) => {
+    if (mark.fraction === 0 || mark.fraction === 1) return true
+    const lunarDay = context.daysBetween(november.snap.monthStart, mark.iso) + 1
+    return Math.abs(mark.fraction - (lunarDay - 0.5) / november.snap.monthLength) < 1e-9
+  })
+    && november.cycle.phaseMarkers.map((mark) => mark.angle).join(",") === "0,45,90,135,180,225,270,315,0",
+  november.cycle.phaseMarkers.map((mark) => mark.fraction.toFixed(6) + "@" + mark.angle).join(", ")
+)
+const phaseAlignment = ["First Quarter", "Full Moon", "Last Quarter"].every((name) => {
+  const mark = november.cycle.phaseMarkers.filter((item) => item.name === name)[0]
+  const phaseDay = cycleForDate(mark.iso, "days-8-15-22-29")
+  return Math.abs(phaseDay.cycle.progress - mark.fraction) < 1e-9
+})
+check(
+  "progress fill meets the phase markers on their dates",
+  phaseAlignment,
+  november.cycle.phaseMarkers.map((mark) => mark.name + " " + mark.fraction.toFixed(6)).join(", ")
+)
+check(
+  "cycle phase dates stay inside the month",
+  november.cycle.phaseMarkers.every((mark) => {
+    return mark.iso >= november.snap.monthStart && mark.iso <= november.snap.nextMonthStart
+  }),
+  november.cycle.phaseMarkers.map((mark) => mark.iso).join(", ")
+)
+const firstCrescent = cycleForDate("2026-11-15", "days-8-15-22-29", "crescent-1")
+check(
+  "cycle follows the chosen new-moon basis",
+  firstCrescent.cycle.phaseMarkers[0].dateLabel === "Nov 10"
+    && firstCrescent.cycle.phaseMarkers[4].dateLabel === "Nov 24"
+    && firstCrescent.cycle.phaseMarkers[8].dateLabel === "Dec 9",
+  firstCrescent.cycle.phaseMarkers.map((mark) => mark.dateLabel).join(", ")
+)
+const saturdayCycle = cycleForDate("2026-11-15", "week-saturday")
+check(
+  "cycle ignores the sabbath rule",
+  JSON.stringify(saturdayCycle.cycle.phaseMarkers) === JSON.stringify(november.cycle.phaseMarkers),
+  saturdayCycle.cycle.phaseMarkers.map((mark) => mark.name + " " + mark.dateLabel).join(", ")
+)
+const december = cycleForDate("2026-12-20", "days-8-15-22-29")
+check(
+  "cycle phase dates move to the selected lunar month",
+  december.snap.monthStart !== november.snap.monthStart
+    && JSON.stringify(december.cycle.phaseMarkers) !== JSON.stringify(november.cycle.phaseMarkers),
+  december.snap.monthStart + " " + december.cycle.phaseMarkers.map((mark) => mark.dateLabel).join(", ")
+)
 check("sabbaths is a panel tab", context.knownView("sabbaths"))
 check("eclipses is a panel tab", context.knownView("eclipses"))
 check("settings is not a panel tab", context.knownView("settings") === false)

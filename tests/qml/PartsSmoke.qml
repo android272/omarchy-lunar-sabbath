@@ -32,8 +32,6 @@ Item {
     id: cycleView
     width: 460
     cycle: model.view ? model.view.cycle : null
-    day: model.view ? model.view.selected : null
-    ruleShort: model.view && model.view.rule ? model.view.rule.short : ""
   }
 
   SabbathsView {
@@ -71,10 +69,13 @@ Item {
       var cells = model.view && model.view.calendar && model.view.calendar.cells
         ? model.view.calendar.cells.length : 0
       var strip = cycleView.phaseStripOk()
-      if (model.ready && phase && cells === 42 && strip)
+      var alignment = cycleView.phaseDatesOk()
+      var dates = cycleView.phaseDates.length === 5
+        && cycleView.phaseDates.every(function (mark) { return mark.dateLabel })
+      if (model.ready && phase && cells === 42 && strip && alignment && dates)
         console.log("PartsSmoke: views loaded OK " + phase)
       else
-        console.log("PartsSmoke: views failed ready " + model.ready + " cells " + cells + " strip " + strip)
+        console.log("PartsSmoke: views failed ready " + model.ready + " cells " + cells + " strip " + strip + " alignment " + alignment + " dates " + dates)
       Qt.quit()
     }
   }

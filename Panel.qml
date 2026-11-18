@@ -396,8 +396,6 @@ Ui.Panel {
             CycleView {
               visible: !root.showingOverlay && root.activeView === "cycle"
               cycle: root.model && root.model.view ? root.model.view.cycle : null
-              day: root.model && root.model.view ? root.model.view.selected : null
-              ruleShort: root.model && root.model.view && root.model.view.rule ? root.model.view.rule.short : ""
             }
 
             SabbathsView {
