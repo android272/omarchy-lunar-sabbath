@@ -141,7 +141,7 @@ check(
     && context.previousSabbathIso("2026-11-07", "UTC", "week-saturday", "conjunction") === "2026-10-31"
 )
 
-function sabbathView(selectedIso) {
+function viewOn(selectedIso) {
   return context.buildView({
     nowMs: Date.parse("2026-11-05T18:00:00Z"),
     selectedIso: selectedIso,
@@ -155,9 +155,9 @@ function sabbathView(selectedIso) {
     weekStart: 0
   })
 }
-const futureList = sabbathView("2027-01-08")
-const pastList = sabbathView("2026-10-01")
-const onSabbath = sabbathView("2026-11-07")
+const futureList = viewOn("2027-01-08")
+const pastList = viewOn("2026-10-01")
+const onSabbath = viewOn("2026-11-07")
 const jerusalemSabbaths = (iso) => context.sabbathsFrom(iso, "Asia/Jerusalem", "days-8-15-22-29", "conjunction", 8)
 check(
   "sabbath list on today still starts from today",
@@ -251,6 +251,41 @@ check(
     && context.nextSabbathIso("2026-11-07", "UTC", "week-saturday", "conjunction") === "2026-11-14"
 )
 check("eclipse cards", view.eclipses.length === 2, view.eclipses.map((e) => e.type).join(", "))
+const beforeMarch = viewOn("2026-01-01")
+const onMarchEclipse = viewOn("2026-03-03")
+const afterFebruary = viewOn("2027-03-01")
+check(
+  "past selection lists the eclipses following that date",
+  beforeMarch.eclipses.length === 2
+    && beforeMarch.eclipses[0].type === "Annular solar eclipse"
+    && beforeMarch.eclipses[0].whenLabel.indexOf("17 Feb 2026") >= 0
+    && beforeMarch.eclipses[1].type === "Total lunar eclipse"
+    && beforeMarch.eclipses[1].whenLabel.indexOf("3 Mar 2026") >= 0,
+  beforeMarch.eclipses.map((e) => e.type + " " + e.whenLabel).join(" || ")
+)
+check(
+  "an eclipse on the selected date is still listed",
+  onMarchEclipse.eclipses[0].type === "Total lunar eclipse"
+    && onMarchEclipse.eclipses[0].whenLabel.indexOf("3 Mar 2026") >= 0,
+  onMarchEclipse.eclipses.map((e) => e.type + " " + e.whenLabel).join(" || ")
+)
+check(
+  "future selection drops the old eclipse and adds the next lunar one",
+  afterFebruary.eclipses.length === 2
+    && afterFebruary.eclipses.every((e) => e.whenLabel.indexOf("Feb 2027") < 0)
+    && afterFebruary.eclipses[0].kind === "solar"
+    && afterFebruary.eclipses[0].whenLabel.indexOf("2 Aug 2027") >= 0
+    && afterFebruary.eclipses[1].kind === "lunar"
+    && afterFebruary.eclipses[1].whenLabel.indexOf("17 Aug 2027") >= 0,
+  afterFebruary.eclipses.map((e) => e.type + " " + e.whenLabel).join(" || ")
+)
+check(
+  "eclipse countdowns follow the selected date",
+  beforeMarch.eclipses.every((e) => e.countdown.indexOf("passed") < 0)
+    && afterFebruary.eclipses[0].countdown
+      === context.countdownHours(afterFebruary.eclipses[0].utcMs, context.utcMsFromLocal(2027, 3, 1, 0, 0, "Asia/Jerusalem")),
+  beforeMarch.eclipses.map((e) => e.countdown).join(" / ") + " || " + afterFebruary.eclipses[0].countdown
+)
 check("rule label", view.rule.short === "Rule: 1/8/15/22/29")
 check(
   "tonight footer labels",
