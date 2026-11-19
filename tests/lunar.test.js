@@ -184,17 +184,43 @@ check(
   pastList.sabbaths[0].iso + " .. " + pastList.sabbaths[7].iso
 )
 check(
-  "a sabbath on the selected date leads the list without a today label",
+  "a future sabbath on the selected date is not labeled today",
   onSabbath.selectedIso === "2026-11-07"
     && onSabbath.sabbaths[0].iso === "2026-11-07"
-    && onSabbath.sabbaths[0].countdown === "today"
+    && onSabbath.sabbaths[0].countdown === "in 2 days"
     && onSabbath.sabbaths.every((s) => s.isToday === false),
   onSabbath.sabbaths[0].iso + " " + onSabbath.sabbaths[0].countdown
 )
+const todayIsSabbath = context.buildView({
+  nowMs: Date.parse("2026-11-07T12:00:00Z"),
+  ruleId: "days-8-15-22-29",
+  basisId: "conjunction",
+  locationConfigured: true,
+  latitude: 31.7683,
+  longitude: 35.2137,
+  timeZone: "Asia/Jerusalem",
+  locationLabel: "Jerusalem",
+  weekStart: 0
+})
 check(
-  "sabbath countdowns follow the selected date",
-  futureList.sabbaths.every((s) => s.countdown === context.countdownDays(s.iso, futureList.selectedIso))
-    && pastList.sabbaths.every((s) => s.countdown === context.countdownDays(s.iso, pastList.selectedIso)),
+  "an actual today sabbath still says today",
+  todayIsSabbath.todayIso === "2026-11-07"
+    && todayIsSabbath.sabbaths[0].iso === "2026-11-07"
+    && todayIsSabbath.sabbaths[0].isToday === true
+    && todayIsSabbath.sabbaths[0].countdown === "today",
+  todayIsSabbath.sabbaths[0].iso + " " + todayIsSabbath.sabbaths[0].countdown
+)
+check(
+  "past sabbaths say past instead of counting down",
+  pastList.sabbaths.some((s) => s.iso < "2026-11-05")
+    && pastList.sabbaths.filter((s) => s.iso < "2026-11-05").every((s) => s.countdown === "past")
+    && pastList.sabbaths.every((s) => s.isToday === false),
+  pastList.sabbaths.map((s) => s.iso + " " + s.countdown).join(", ")
+)
+check(
+  "sabbath countdowns stay measured from real today",
+  futureList.sabbaths.every((s) => s.countdown === context.countdownDays(s.iso, "2026-11-05"))
+    && pastList.sabbaths.every((s) => s.countdown === context.countdownDays(s.iso, "2026-11-05")),
   futureList.sabbaths[0].countdown + " / " + pastList.sabbaths[0].countdown
 )
 check(

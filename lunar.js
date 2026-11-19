@@ -980,7 +980,8 @@ function countdownHours(utcMs, nowMs) {
 
 function countdownDays(iso, today) {
   var days = daysBetween(today, iso)
-  if (days <= 0) return "today"
+  if (days < 0) return "past"
+  if (days === 0) return "today"
   if (days === 1) return "tomorrow"
   return "in " + days + " days"
 }
@@ -1192,10 +1193,10 @@ function phaseAfter(fromMs, angle, timeZone) {
   return { utcMs: ms, iso: localIso(ms, timeZone), whenLabel: formatInstant(ms, timeZone) }
 }
 
-// Lists count Sabbaths from fromIso, inclusive, and measures their countdowns
-// from that same anchor. todayRef is the real current date: when supplied it
-// only drives the isToday marker, so viewing another date never calls that
-// date "today". Callers that do not pass it keep the old single-anchor behavior.
+// Lists count Sabbaths from fromIso, inclusive. Countdowns and the isToday
+// marker both use todayRef, the real current date, so scrubbing to another date
+// moves the window without relabeling those Sabbaths as "today" or counting
+// down to ones already past. Callers that omit it keep the single-anchor behavior.
 function sabbathsFrom(fromIso, timeZone, ruleId, basisId, count, todayRef) {
   var cache = monthCache()
   var list = []
@@ -1212,7 +1213,7 @@ function sabbathsFrom(fromIso, timeZone, ruleId, basisId, count, todayRef) {
         dateLabel: formatIso(iso, timeZone),
         weekdayName: WEEKDAYS[weekdayOf(iso, timeZone)],
         lunarDay: ruleId === "week-saturday" ? lunarDay : lunarDay,
-        countdown: countdownDays(iso, fromIso),
+        countdown: countdownDays(iso, reference),
         isToday: iso === reference
       })
     }
