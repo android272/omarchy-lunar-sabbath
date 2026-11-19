@@ -967,7 +967,7 @@ function formatInstant(utcMs, timeZone) {
 
 function countdownHours(utcMs, nowMs) {
   var delta = utcMs - nowMs
-  if (delta < -3 * 3600000) return "passed"
+  if (delta < -3 * 3600000) return "past"
   if (delta < -60000) return "in progress"
   if (Math.abs(delta) <= 60000) return "now"
   var minutes = Math.round(delta / 60000)
@@ -1370,7 +1370,10 @@ function localEclipseView(event, latitude, longitude, timeZone) {
   return "Visible here as a " + localType + " eclipse. About " + pct + "% of the Sun's disk is covered."
 }
 
-function eclipseCards(fromMs, timeZone, latitude, longitude) {
+// fromMs picks the window to search, so the list follows the viewed date.
+// nowMs is the real current time and is the only reference for countdowns,
+// which stay the same no matter where the user has navigated.
+function eclipseCards(fromMs, nowMs, timeZone, latitude, longitude) {
   var start = jdFromUnixMs(fromMs) - 0.2
   var events = eclipsesBetween(start, start + 420)
   var nextLunar = null
@@ -1382,13 +1385,13 @@ function eclipseCards(fromMs, timeZone, latitude, longitude) {
     if (events[i].kind === "solar" && !nextSolar) nextSolar = events[i]
   }
   var cards = []
-  if (nextLunar) cards.push(eclipseCard(nextLunar, fromMs, timeZone, latitude, longitude))
-  if (nextSolar) cards.push(eclipseCard(nextSolar, fromMs, timeZone, latitude, longitude))
+  if (nextLunar) cards.push(eclipseCard(nextLunar, nowMs, timeZone, latitude, longitude))
+  if (nextSolar) cards.push(eclipseCard(nextSolar, nowMs, timeZone, latitude, longitude))
   cards.sort(function (a, b) { return a.utcMs - b.utcMs })
   return cards
 }
 
-function eclipseCard(event, fromMs, timeZone, latitude, longitude) {
+function eclipseCard(event, nowMs, timeZone, latitude, longitude) {
   var ms = unixMsFromJd(event.jd)
   var shadow = event.type.indexOf("Penumbral") === 0 ? "of the Moon in the penumbra" : (event.kind === "lunar" ? "of the Moon in Earth's umbra" : "of the Sun's disk")
   var duration = formatDuration(event.durationHours)
@@ -1397,7 +1400,7 @@ function eclipseCard(event, fromMs, timeZone, latitude, longitude) {
     type: event.type,
     utcMs: ms,
     whenLabel: formatInstant(ms, timeZone),
-    countdown: countdownHours(ms, fromMs),
+    countdown: countdownHours(ms, nowMs),
     obscuration: Math.round(event.obscuration * 100),
     obscurationLabel: Math.round(event.obscuration * 100) + "% " + shadow,
     magnitudeLabel: "Magnitude " + (Math.round(event.magnitude * 100) / 100).toFixed(2),
@@ -1439,7 +1442,7 @@ function buildView(opts) {
   var selectedParts = parseIso(selected)
   var fromMs = selected === today ? nowMs : utcMsFromLocal(selectedParts.year, selectedParts.month, selectedParts.day, 12, 0, timeZone)
   // Start at local midnight so an eclipse earlier on the viewed day is still
-  // listed. Countdowns use the same anchor, as on the Sabbaths tab.
+  // listed. Countdowns stay pinned to the real nowMs passed below.
   var eclipseFromMs = selected === today
     ? nowMs
     : utcMsFromLocal(selectedParts.year, selectedParts.month, selectedParts.day, 0, 0, timeZone)
@@ -1462,7 +1465,7 @@ function buildView(opts) {
     sabbaths: sabbathsFrom(selected, timeZone, rule.id, basis.id, 8, today),
     calendar: calendarMonth(selected, today, selected, timeZone, rule.id, basis.id, weekStart),
     cycle: cycleFor(selectedSnap, timeZone),
-    eclipses: eclipseCards(eclipseFromMs, timeZone, lat, lon)
+    eclipses: eclipseCards(eclipseFromMs, nowMs, timeZone, lat, lon)
   }
 }
 

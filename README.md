@@ -61,7 +61,7 @@ Settings can search a small built-in city list, save a place entered by hand, or
 
 ## Eclipses
 
-The next lunar and solar eclipses are estimated offline from the same low-precision Sun and Moon used for the phase. The list follows the selected date, so navigating forward drops eclipses already past and brings the following ones into view. The panel labels those times as approximate. Penumbral lunar eclipses are included and described as subtle. A solar eclipse's global type can differ from what is visible at the saved location.
+The next lunar and solar eclipses are estimated offline from the same low-precision Sun and Moon used for the phase. The list follows the selected date, so navigating forward drops eclipses already past and brings the following ones into view. Countdowns are measured from today, so they stay the same as you navigate, and eclipses already past read `past`. The panel labels those times as approximate. Penumbral lunar eclipses are included and described as subtle. A solar eclipse's global type can differ from what is visible at the saved location.
 
 ## Install
 

@@ -279,12 +279,26 @@ check(
     && afterFebruary.eclipses[1].whenLabel.indexOf("17 Aug 2027") >= 0,
   afterFebruary.eclipses.map((e) => e.type + " " + e.whenLabel).join(" || ")
 )
+const fewWeeksAhead = viewOn("2026-11-20")
+const twoMonthsAhead = viewOn("2027-01-01")
+const augustPast = viewOn("2026-08-01")
+const febEclipse = (v) => v.eclipses.find((e) => e.whenLabel.indexOf("6 Feb 2027") >= 0)
 check(
-  "eclipse countdowns follow the selected date",
-  beforeMarch.eclipses.every((e) => e.countdown.indexOf("passed") < 0)
-    && afterFebruary.eclipses[0].countdown
-      === context.countdownHours(afterFebruary.eclipses[0].utcMs, context.utcMsFromLocal(2027, 3, 1, 0, 0, "Asia/Jerusalem")),
-  beforeMarch.eclipses.map((e) => e.countdown).join(" / ") + " || " + afterFebruary.eclipses[0].countdown
+  "an eclipse countdown stays the same as the selection moves",
+  febEclipse(view) && febEclipse(fewWeeksAhead) && febEclipse(twoMonthsAhead)
+    && febEclipse(view).countdown === febEclipse(fewWeeksAhead).countdown
+    && febEclipse(view).countdown === febEclipse(twoMonthsAhead).countdown
+    && febEclipse(view).countdown
+      === context.countdownHours(febEclipse(view).utcMs, Date.parse("2026-11-05T18:00:00Z")),
+  [view, fewWeeksAhead, twoMonthsAhead].map((v) => febEclipse(v) && febEclipse(v).countdown).join(" / ")
+)
+check(
+  "eclipses already past say past instead of counting down",
+  augustPast.eclipses.length === 2
+    && augustPast.eclipses.every((e) => e.countdown === "past")
+    && beforeMarch.eclipses.every((e) => e.countdown === "past"),
+  augustPast.eclipses.map((e) => e.type + " " + e.countdown).join(" / ")
+    + " || " + beforeMarch.eclipses.map((e) => e.countdown).join(" / ")
 )
 check("rule label", view.rule.short === "Rule: 1/8/15/22/29")
 check(
