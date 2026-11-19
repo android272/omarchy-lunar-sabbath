@@ -1192,11 +1192,16 @@ function phaseAfter(fromMs, angle, timeZone) {
   return { utcMs: ms, iso: localIso(ms, timeZone), whenLabel: formatInstant(ms, timeZone) }
 }
 
-function sabbathsFrom(today, timeZone, ruleId, basisId, count) {
+// Lists count Sabbaths from fromIso, inclusive, and measures their countdowns
+// from that same anchor. todayRef is the real current date: when supplied it
+// only drives the isToday marker, so viewing another date never calls that
+// date "today". Callers that do not pass it keep the old single-anchor behavior.
+function sabbathsFrom(fromIso, timeZone, ruleId, basisId, count, todayRef) {
   var cache = monthCache()
   var list = []
-  var iso = today
+  var iso = fromIso
   var guard = 0
+  var reference = todayRef === undefined ? fromIso : todayRef
   while (list.length < count && guard < 200) {
     var month = monthContaining(iso, timeZone, basisId, cache)
     var lunarDay = lunarDayOf(iso, month)
@@ -1207,8 +1212,8 @@ function sabbathsFrom(today, timeZone, ruleId, basisId, count) {
         dateLabel: formatIso(iso, timeZone),
         weekdayName: WEEKDAYS[weekdayOf(iso, timeZone)],
         lunarDay: ruleId === "week-saturday" ? lunarDay : lunarDay,
-        countdown: countdownDays(iso, today),
-        isToday: iso === today
+        countdown: countdownDays(iso, fromIso),
+        isToday: iso === reference
       })
     }
     iso = addDays(iso, 1)
@@ -1225,8 +1230,8 @@ function nextSabbathIso(iso, timeZone, ruleId, basisId) {
   return sabbathStep(iso, timeZone, ruleId, basisId, 1)
 }
 
-// The Sabbaths tab lists eight Sabbaths from today. Stepping has to start at
-// the selected date, or a day past that list falls back onto today's Sabbath.
+// The Sabbaths tab lists eight Sabbaths from the selected date. Stepping has to
+// start at that date, not at the displayed list, which stops after eight.
 function sabbathStep(iso, timeZone, ruleId, basisId, direction) {
   if (!parseIso(iso) || (direction !== 1 && direction !== -1)) return ""
   var cache = monthCache()
@@ -1288,15 +1293,15 @@ function rotatedWeekdays(weekStart) {
 // fraction as the lunar day it falls on, so the moon strip, the progress fill,
 // and the date labels share one timeline.
 var CYCLE_PHASE_POINTS = [
-  { angle: 0, name: "New Moon", showDate: true, endpoint: "start" },
+  { angle: 0, name: "New Moon", cardName: "New Moon", showDate: true, endpoint: "start" },
   { angle: 45, name: "Waxing Crescent", showDate: false },
-  { angle: 90, name: "First Quarter", showDate: true },
+  { angle: 90, name: "First Quarter", cardName: "First Quarter", showDate: true },
   { angle: 135, name: "Waxing Gibbous", showDate: false },
-  { angle: 180, name: "Full Moon", showDate: true },
+  { angle: 180, name: "Full Moon", cardName: "Full Moon", showDate: true },
   { angle: 225, name: "Waning Gibbous", showDate: false },
-  { angle: 270, name: "Last Quarter", showDate: true },
+  { angle: 270, name: "Last Quarter", cardName: "Last Quarter", showDate: true },
   { angle: 315, name: "Waning Crescent", showDate: false },
-  { angle: 0, name: "Next New Moon", showDate: true, endpoint: "end" }
+  { angle: 0, name: "Next New Moon", cardName: "New Moon", showDate: true, endpoint: "end" }
 ]
 
 function cycleFor(snap, timeZone) {
@@ -1319,6 +1324,7 @@ function cycleFor(snap, timeZone) {
     phaseMarkers.push({
       angle: point.angle,
       name: point.name,
+      cardName: point.cardName || point.name,
       showDate: point.showDate,
       fraction: fraction,
       iso: iso,
@@ -1446,7 +1452,7 @@ function buildView(opts) {
     daysUntilSabbath: until.days,
     nextSabbathIso: until.iso,
     phases: upcomingPhases(fromMs, timeZone),
-    sabbaths: sabbathsFrom(today, timeZone, rule.id, basis.id, 8),
+    sabbaths: sabbathsFrom(selected, timeZone, rule.id, basis.id, 8, today),
     calendar: calendarMonth(selected, today, selected, timeZone, rule.id, basis.id, weekStart),
     cycle: cycleFor(selectedSnap, timeZone),
     eclipses: eclipseCards(nowMs, timeZone, lat, lon)

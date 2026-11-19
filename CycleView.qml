@@ -5,6 +5,7 @@ Column {
   id: root
 
   property var cycle: null
+  signal pickDate(string iso)
 
   // One lunar month, drawn north-up. A new moon sits on each end of the bar.
   // The phase markers carry the same fractions as the progress fill and the
@@ -33,6 +34,11 @@ Column {
     if (left < 0) left = 0
     if (left > maxLeft) left = maxLeft
     return left
+  }
+
+  function activatePhase(index) {
+    if (index < 0 || index >= root.phaseDates.length) return
+    root.pickDate(root.phaseDates[index].iso)
   }
 
   function phaseStripOk() {
@@ -110,6 +116,36 @@ Column {
       var actualCenter = labels[i].x + labels[i].width / 2
       if (Math.abs(actualCenter - expectedCenter) > 0.6) {
         console.log("CycleView: date " + i + " center " + actualCenter + " expected " + expectedCenter)
+        return false
+      }
+    }
+    return true
+  }
+
+  function phaseCardsOk() {
+    var cards = []
+    var i
+    for (i = 0; i < phaseGrid.children.length; i++) {
+      var child = phaseGrid.children[i]
+      if (!child || child.cardTitle === undefined) continue
+      cards.push(child)
+    }
+    cards.sort(function (a, b) {
+      if (a.y !== b.y) return a.y - b.y
+      return a.x - b.x
+    })
+    if (cards.length !== root.phaseDates.length) {
+      console.log("CycleView: expected " + root.phaseDates.length + " cards, saw " + cards.length)
+      return false
+    }
+    for (i = 0; i < cards.length; i++) {
+      var expected = root.phaseDates[i]
+      if (cards[i].cardTitle !== expected.cardName || cards[i].cardDate !== expected.dateLabel) {
+        console.log("CycleView: card " + i + " is " + cards[i].cardTitle + " " + cards[i].cardDate)
+        return false
+      }
+      if (Math.abs(cards[i].width - phaseGrid.cardWidth) > 0.6) {
+        console.log("CycleView: card " + i + " width " + cards[i].width + " expected " + phaseGrid.cardWidth)
         return false
       }
     }
@@ -227,9 +263,77 @@ Column {
     }
   }
 
+  Grid {
+    id: phaseGrid
+    width: parent.width
+    columns: 2
+    spacing: Style.spacing.sm
+
+    readonly property real cardWidth: Math.max(0, (width - spacing) / columns)
+
+    Repeater {
+      model: root.phaseDates
+      delegate: Rectangle {
+        id: card
+        required property var modelData
+        required property int index
+        readonly property string cardTitle: modelData.cardName
+        readonly property string cardDate: modelData.dateLabel
+        width: phaseGrid.cardWidth
+        implicitHeight: cardBody.implicitHeight + Style.space(16)
+        height: implicitHeight
+        radius: Style.space(6)
+        color: cardMouse.containsMouse
+          ? Util.alpha(Color.popups.text, 0.1)
+          : Util.alpha(Color.popups.text, 0.05)
+        border.width: 1
+        border.color: Util.alpha(Color.popups.text, 0.18)
+
+        Column {
+          id: cardBody
+          width: parent.width - Style.space(20)
+          anchors.centerIn: parent
+          spacing: Style.space(2)
+
+          Text {
+            width: parent.width
+            text: card.cardTitle
+            color: Color.popups.text
+            font.family: Style.font.family
+            font.pixelSize: Style.font.body
+            font.bold: true
+            elide: Text.ElideRight
+          }
+
+          Text {
+            width: parent.width
+            text: card.cardDate
+            color: Color.popups.text
+            opacity: 0.72
+            font.family: Style.font.family
+            font.pixelSize: Style.font.bodySmall
+            elide: Text.ElideRight
+          }
+        }
+
+        MouseArea {
+          id: cardMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: root.activatePhase(card.index)
+        }
+
+        Accessible.role: Accessible.Button
+        Accessible.name: card.cardTitle + " " + card.cardDate
+        Accessible.onPressAction: root.activatePhase(card.index)
+      }
+    }
+  }
+
   Text {
     width: parent.width
-    text: "Dates mark the principal phases of this lunar month, new moon to new moon."
+    text: "Choose a phase to open that date on Tonight."
     color: Color.popups.text
     opacity: 0.7
     wrapMode: Text.WordWrap

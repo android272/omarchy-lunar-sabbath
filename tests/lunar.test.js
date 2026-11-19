@@ -140,6 +140,69 @@ check(
   context.previousSabbathIso("2026-11-08", "UTC", "week-saturday", "conjunction") === "2026-11-07"
     && context.previousSabbathIso("2026-11-07", "UTC", "week-saturday", "conjunction") === "2026-10-31"
 )
+
+function sabbathView(selectedIso) {
+  return context.buildView({
+    nowMs: Date.parse("2026-11-05T18:00:00Z"),
+    selectedIso: selectedIso,
+    ruleId: "days-8-15-22-29",
+    basisId: "conjunction",
+    locationConfigured: true,
+    latitude: 31.7683,
+    longitude: 35.2137,
+    timeZone: "Asia/Jerusalem",
+    locationLabel: "Jerusalem",
+    weekStart: 0
+  })
+}
+const futureList = sabbathView("2027-01-08")
+const pastList = sabbathView("2026-10-01")
+const onSabbath = sabbathView("2026-11-07")
+const jerusalemSabbaths = (iso) => context.sabbathsFrom(iso, "Asia/Jerusalem", "days-8-15-22-29", "conjunction", 8)
+check(
+  "sabbath list on today still starts from today",
+  view.sabbaths[0].iso === jerusalemSabbaths("2026-11-05")[0].iso
+    && view.sabbaths[7].iso === jerusalemSabbaths("2026-11-05")[7].iso,
+  view.sabbaths[0].iso + " .. " + view.sabbaths[7].iso
+)
+check(
+  "future selection lists the next eight sabbaths from that date",
+  futureList.sabbaths.length === 8
+    && futureList.sabbaths[0].iso >= "2027-01-08"
+    && futureList.sabbaths[0].iso === jerusalemSabbaths("2027-01-08")[0].iso
+    && futureList.sabbaths[7].iso === jerusalemSabbaths("2027-01-08")[7].iso
+    && futureList.sabbaths[0].iso !== view.sabbaths[0].iso,
+  futureList.sabbaths[0].iso + " .. " + futureList.sabbaths[7].iso
+)
+check(
+  "past selection lists the next eight sabbaths from that date",
+  pastList.sabbaths.length === 8
+    && pastList.sabbaths[0].iso >= "2026-10-01"
+    && pastList.sabbaths[0].iso === jerusalemSabbaths("2026-10-01")[0].iso
+    && pastList.sabbaths[7].iso === jerusalemSabbaths("2026-10-01")[7].iso
+    && pastList.sabbaths[0].iso !== view.sabbaths[0].iso,
+  pastList.sabbaths[0].iso + " .. " + pastList.sabbaths[7].iso
+)
+check(
+  "a sabbath on the selected date leads the list without a today label",
+  onSabbath.selectedIso === "2026-11-07"
+    && onSabbath.sabbaths[0].iso === "2026-11-07"
+    && onSabbath.sabbaths[0].countdown === "today"
+    && onSabbath.sabbaths.every((s) => s.isToday === false),
+  onSabbath.sabbaths[0].iso + " " + onSabbath.sabbaths[0].countdown
+)
+check(
+  "sabbath countdowns follow the selected date",
+  futureList.sabbaths.every((s) => s.countdown === context.countdownDays(s.iso, futureList.selectedIso))
+    && pastList.sabbaths.every((s) => s.countdown === context.countdownDays(s.iso, pastList.selectedIso)),
+  futureList.sabbaths[0].countdown + " / " + pastList.sabbaths[0].countdown
+)
+check(
+  "days until sabbath still counts from today",
+  futureList.nextSabbathIso === view.nextSabbathIso
+    && pastList.sabbathCountdown === view.sabbathCountdown,
+  futureList.nextSabbathIso + " " + pastList.sabbathCountdown
+)
 const todaySabbaths = context.sabbathsFrom("2026-11-15", "America/New_York", "days-8-15-22-29", "conjunction", 8)
 const todayFirst = todaySabbaths[0].iso
 const todayLast = todaySabbaths[todaySabbaths.length - 1].iso
@@ -422,6 +485,12 @@ check(
   november.cycle.phaseMarkers.map((mark) => mark.name + " " + mark.dateLabel).join(", ")
     === "New Moon Nov 9, Waxing Crescent Nov 13, First Quarter Nov 17, Waxing Gibbous Nov 21, Full Moon Nov 24, Waning Gibbous Nov 27, Last Quarter Dec 1, Waning Crescent Dec 4, Next New Moon Dec 8",
   november.cycle.phaseMarkers.map((mark) => mark.name + " " + mark.dateLabel).join(", ")
+)
+check(
+  "cycle cards name the principal phases",
+  november.cycle.phaseMarkers.filter((mark) => mark.showDate).map((mark) => mark.cardName).join(", ")
+    === "New Moon, First Quarter, Full Moon, Last Quarter, New Moon",
+  november.cycle.phaseMarkers.filter((mark) => mark.showDate).map((mark) => mark.cardName).join(", ")
 )
 check(
   "cycle phase markers share the progress timeline",

@@ -396,6 +396,11 @@ Ui.Panel {
             CycleView {
               visible: !root.showingOverlay && root.activeView === "cycle"
               cycle: root.model && root.model.view ? root.model.view.cycle : null
+              onPickDate: function (iso) {
+                if (!root.model) return
+                root.model.selectDate(iso)
+                root.showView("tonight")
+              }
             }
 
             SabbathsView {

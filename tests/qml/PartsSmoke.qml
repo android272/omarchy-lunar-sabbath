@@ -13,6 +13,8 @@ Item {
   width: 480
   height: 720
 
+  property string pickedIso: ""
+
   LunarModel { id: model }
 
   TonightView {
@@ -32,6 +34,9 @@ Item {
     id: cycleView
     width: 460
     cycle: model.view ? model.view.cycle : null
+    onPickDate: function (iso) {
+      root.pickedIso = iso
+    }
   }
 
   SabbathsView {
@@ -70,12 +75,21 @@ Item {
         ? model.view.calendar.cells.length : 0
       var strip = cycleView.phaseStripOk()
       var alignment = cycleView.phaseDatesOk()
+      var cards = cycleView.phaseCardsOk()
       var dates = cycleView.phaseDates.length === 5
         && cycleView.phaseDates.every(function (mark) { return mark.dateLabel })
-      if (model.ready && phase && cells === 42 && strip && alignment && dates)
+      var picked = false
+      if (cycleView.phaseDates.length > 2) {
+        var target = cycleView.phaseDates[2].iso
+        cycleView.activatePhase(2)
+        picked = root.pickedIso === target
+      }
+      if (model.ready && phase && cells === 42 && strip && alignment && cards && dates && picked)
         console.log("PartsSmoke: views loaded OK " + phase)
       else
-        console.log("PartsSmoke: views failed ready " + model.ready + " cells " + cells + " strip " + strip + " alignment " + alignment + " dates " + dates)
+        console.log("PartsSmoke: views failed ready " + model.ready + " cells " + cells
+          + " strip " + strip + " alignment " + alignment + " cards " + cards
+          + " dates " + dates + " picked " + picked)
       Qt.quit()
     }
   }
